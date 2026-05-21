@@ -115,6 +115,32 @@ class Ficha(models.Model):
     def __str__(self):
         return f"Ficha N° {self.n_ficha} - {self.mascota.nombre}"
 
+class HorarioLaboral(models.Model):
+    DIAS_SEMANA = [
+        (0, "Lunes"),
+        (1, "Martes"),
+        (2, "Miércoles"),
+        (3, "Jueves"),
+        (4, "Viernes"),
+        (5, "Sábado"),
+        (6, "Domingo"),
+    ]
+
+    id_horario = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    profesional = models.ForeignKey(Profesional, on_delete=models.CASCADE, related_name="horarios")
+    sucursal = models.ForeignKey(Sucursal, on_delete=models.CASCADE, related_name="horarios")
+    dia_semana = models.IntegerField(choices=DIAS_SEMANA)
+    hora_inicio = models.TimeField()
+    hora_fin = models.TimeField()
+    activo = models.BooleanField(default=True, help_text="Permite desactivar un día feriado o libre rápidamente")
+
+    class Meta:
+        # Evitar que un profesional tenga horarios duplicados el mismo día y en el mismo bloque
+        unique_together = ['profesional', 'dia_semana', 'hora_inicio']
+
+    def __str__(self):
+        return f"{self.profesional.nombre} - {self.get_dia_semana_display()} ({self.hora_inicio} a {self.hora_fin})"
+
 class Cita(models.Model):
     id_cita = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     n_cita = models.IntegerField(unique=True)
@@ -147,7 +173,7 @@ class Cita(models.Model):
         end_datetime = start_datetime + datetime.timedelta(minutes=self.duracion_minutos)
         self.hora_fin = end_datetime.time()
 
-        # 2. VALIDACIÓN 1: ¿El profesional trabaja ese día de la semana en esa hora?
+        # 2. ¿El profesional trabaja ese día en esa hora?
         dia_semana_num = self.dia.weekday() # 0 = Lunes, 6 = Domingo
         en_horario = HorarioLaboral.objects.filter(
             profesional=self.profesional,
@@ -161,8 +187,8 @@ class Cita(models.Model):
         if not en_horario:
             raise ValidationError(f"El profesional {self.profesional.nombre} no atiende en esa sucursal en el bloque solicitado ({self.hora} - {self.hora_fin}).")
 
-        # 3. VALIDACIÓN 2: El candado del Overlap (Choque de horarios)
-        # Dos bloques [A, B] y [C, D] chocan si: A < D y B > C
+        # 3. Choque de horarios
+        # Dos bloques (A, B) y (C, D) chocan si: A < D y B > C
         choca_cita = Cita.objects.filter(
             profesional=self.profesional,
             dia=self.dia,
@@ -225,29 +251,3 @@ class Feedback(models.Model):
 
     def __str__(self):
         return f"Feedback Cita {self.cita.n_cita} - {self.n_estrellas} Estrellas"
-    
-class HorarioLaboral(models.Model):
-    DIAS_SEMANA = [
-        (0, "Lunes"),
-        (1, "Martes"),
-        (2, "Miércoles"),
-        (3, "Jueves"),
-        (4, "Viernes"),
-        (5, "Sábado"),
-        (6, "Domingo"),
-    ]
-
-    id_horario = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    profesional = models.ForeignKey(Profesional, on_delete=models.CASCADE, related_name="horarios")
-    sucursal = models.ForeignKey(Sucursal, on_delete=models.CASCADE, related_name="horarios")
-    dia_semana = models.IntegerField(choices=DIAS_SEMANA)
-    hora_inicio = models.TimeField()
-    hora_fin = models.TimeField()
-    activo = models.BooleanField(default=True, help_text="Permite desactivar un día feriado o libre rápidamente")
-
-    class Meta:
-        # Evitar que un profesional tenga horarios duplicados el mismo día y en el mismo bloque
-        unique_together = ['profesional', 'dia_semana', 'hora_inicio']
-
-    def __str__(self):
-        return f"{self.profesional.nombre} - {self.get_dia_semana_display()} ({self.hora_inicio} a {self.hora_fin})"
