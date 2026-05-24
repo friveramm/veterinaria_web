@@ -1,0 +1,175 @@
+[
+    {
+        "model": "gestion.cargo",
+        "pk": 1,
+        "fields": {
+            "descripcion": "Veterinario General"
+        }
+    },
+    {
+        "model": "gestion.cargo",
+        "pk": 2,
+        "fields": {
+            "descripcion": "Cirujano Experto"
+        }
+    },
+    {
+        "model": "gestion.cargo",
+        "pk": 3,
+        "fields": {
+            "descripcion": "Recepcionista"
+        }
+    },
+    {
+        "model": "gestion.enfermedad",
+        "pk": 1,
+        "fields": {
+            "descripcion": "Parvovirus Canino"
+        }
+    },
+    {
+        "model": "gestion.enfermedad",
+        "pk": 2,
+        "fields": {
+            "descripcion": "Otitis Externa"
+        }
+    },
+    {
+        "model": "gestion.servicio",
+        "pk": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+        "fields": {
+            "n_servicio": 101,
+            "descripcion": "Consulta Médica General",
+            "monto": 25000,
+            "divisa": "CLP",
+            "duracion_minutos": 30
+        }
+    },
+    {
+        "model": "gestion.servicio",
+        "pk": "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e",
+        "fields": {
+            "n_servicio": 102,
+            "descripcion": "Esterilización / Castración",
+            "monto": 85000,
+            "divisa": "CLP",
+            "duracion_minutos": 90
+        }
+    },
+    {
+        "model": "gestion.servicio",
+        "pk": "c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f",
+        "fields": {
+            "n_servicio": 103,
+            "descripcion": "Cirugía Traumatológica Compleja",
+            "monto": 250000,
+            "divisa": "CLP",
+            "duracion_minutos": 150
+        }
+    },
+    {
+        "model": "gestion.sucursal",
+        "pk": "e1a2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c",
+        "fields": {
+            "n_sucursal": 1,
+            "descripcion": "Sucursal Ñuñoa",
+            "servicios": [
+                "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+                "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e"
+            ]
+        }
+    },
+    {
+        "model": "auth.user",
+        "pk": 2,
+        "fields": {
+            "username": "dr_carlos",
+            "first_name": "Carlos",
+            "last_name": "Mendoza",
+            "email": "carlos.mendoza@veterinaria.cl",
+            "is_staff": true,
+            "is_active": true
+        }
+    },
+    {
+        "model": "gestion.profesional",
+        "pk": "f1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+        "fields": {
+            "user": 2,
+            "rut": "15678342K",
+            "nombre": "Dr. Carlos Mendoza",
+            "cargo": 1,
+            "sucursal": "e1a2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c",
+            "servicios": [
+                "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d"
+            ]
+        }
+    },
+    {
+        "model": "auth.user",
+        "pk": 3,
+        "fields": {
+            "username": "dr_maría",
+            "first_name": "María",
+            "last_name": "Peña",
+            "email": "maria.pena@veterinaria.cl",
+            "is_staff": true,
+            "is_active": true
+        }
+    },
+    {
+        "model": "gestion.profesional",
+        "pk": "f2b3c4d5-e6f7-8a9b-0c1d-2e3f4a5b6c7d",
+        "fields": {
+            "user": 3,
+            "rut": "173459824",
+            "nombre": "Dra. María Peña",
+            "cargo": 2,
+            "sucursal": "e1a2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c",
+            "servicios": [
+                "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+                "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e",
+                "c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f"
+            ]
+        }
+    },
+    {
+        "model": "auth.user",
+        "pk": 4,
+        "fields": {
+            "username": "diego_cliente",
+            "first_name": "Diego",
+            "last_name": "Silva",
+            "email": "diego.silva@gmail.com",
+            "is_staff": false,
+            "is_active": true
+        }
+    },
+    {
+        "model": "gestion.dueno",
+        "pk": "d1a2b3c4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+        "fields": {
+            "user": 4,
+            "rut": "194567238",
+            "nombre": "Diego Silva",
+            "direccion": "Av. Grecia 1234, Ñuñoa",
+            "correo": "diego.silva@gmail.com",
+            "fono": "+56987654321"
+        }
+    },
+    {
+        "model": "gestion.mascota",
+        "pk": "91a2b3c4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+        "fields": {
+            "nombre": "Luna",
+            "dueno": "d1a2b3c4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+            "n_chip": "985112000345671",
+            "edad": 3,
+            "fec_nac": "2023-03-15",
+            "especie": "Perro",
+            "enfermedades": [
+                2
+            ]
+        }
+    }
+]
