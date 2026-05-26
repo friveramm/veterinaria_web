@@ -1,0 +1,154 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Administrar Personal Médico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container my-5">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="text-primary fw-bold">{% if profesional %}Editar Ficha de {{ profesional.nombre }}{% else %}Registrar Nuevo Profesional{% endif %}</h2>
+            <a href="{% url 'dashboard_jefatura' %}" class="btn btn-outline-secondary">Volver al Panel</a>
+        </div>
+
+        {% if messages %}
+            {% for m in messages %}
+                <div class="alert {% if m.tags == 'success' %}alert-success{% else %}alert-danger{% endif %}">{{ m }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0 p-4 bg-white">
+                    <h5 class="mb-3 text-secondary">Datos del Profesional</h5>
+                        <form method="POST" id="form-maestro">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="guardar_profesional">
+
+                            {% if not profesional %}
+                                <div class="row">
+                                    <div class="col-6 mb-3"><label class="form-label">Usuario</label><input type="text" id="input-username" name="username" class="form-control" required></div>
+                                    <div class="col-6 mb-3"><label class="form-label">Contraseña</label><input type="password" name="password" class="form-control" required></div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Correo Electrónico</label>
+                                    <input type="email" id="input-email" name="email" class="form-control" required placeholder="ejemplo@clinica.cl">
+                                    <small id="email-feedback" class="text-danger d-none fw-bold mt-1">Ingresa un formato de correo válido.</small>
+                                </div>
+                            {% endif %}
+
+                            <div class="mb-3"><label class="form-label">RUT</label><input type="text" id="input-rut" name="rut" value="{{ profesional.rut|default:'' }}" class="form-control" required placeholder="Ej: 12.345.678-K" maxlength="12">
+                                <small id="rut-feedback" class="text-danger d-none">RUT inválido.</small>
+                            </div>
+                            
+                            <div class="mb-3"><label class="form-label">Nombre Completo</label><input type="text" name="nombre" value="{{ profesional.nombre|default:'' }}" class="form-control" required></div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Cargo</label>
+                                <select class="form-select" id="select-cargo" name="cargo" required>
+                                    {% for c in cargos %}<option value="{{ c.id_cargo }}" {% if profesional.cargo.id_cargo == c.id_cargo %}selected{% endif %}>{{ c.descripcion }}</option>{% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Sucursal Base</label>
+                                <select class="form-select" name="sucursal" required>
+                                    {% for s in sucursales %}<option value="{{ s.id_sucursal }}" {% if profesional.sucursal.id_sucursal == s.id_sucursal %}selected{% endif %}>{{ s.descripcion }}</option>{% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="mb-4" id="seccion-especialidades">
+                                <label class="form-label fw-bold">Especialidades / Servicios Habilitados</label>
+                                <div class="border p-3 bg-light rounded" style="max-height: 180px; overflow-y: auto;" id="caja-servicios">
+                                    {% for ser in servicios %}
+                                        <div class="form-check">
+                                            <input class="form-check-input check-servicio" type="checkbox" name="servicios" value="{{ ser.id_servicio }}" id="ser_{{ ser.id_servicio }}" {% if ser in profesional.servicios.all %}checked{% endif %}>
+                                            <label class="form-check-label" for="ser_{{ ser.id_servicio }}">{{ ser.descripcion }}</label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                <small id="error-servicios" class="text-danger d-none fw-bold mt-1">Debes seleccionar al menos una especialidad.</small>
+                            </div>
+
+                            <button type="submit" id="btn-guardar-maestro" class="btn btn-success w-100 fw-bold">Guardar Cambios</button>
+                        </form>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                {% if profesional %}
+                    <div class="card shadow-sm border-0 p-4 bg-white mb-4">
+                        <h5 class="mb-3 text-secondary">Inyectar Bloque Horario</h5>
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="agregar_horario">
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Sucursal del Turno</label>
+                                <select class="form-select" name="sucursal_horario" required>
+                                    {% for s in sucursales %}<option value="{{ s.id_sucursal }}">{{ s.descripcion }}</option>{% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Día de la Semana</label>
+                                <select class="form-select" name="dia_semana" required>
+                                    {% for num, texto in dias_semana %}<option value="{{ num }}">{{ texto }}</option>{% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-6 mb-3"><label class="form-label">Hora Inicio</label><input type="time" name="hora_inicio" class="form-control" required></div>
+                                <div class="col-6 mb-3"><label class="form-label">Hora Fin</label><input type="time" name="hora_fin" class="form-control" required></div>
+                            </div>
+
+                            <button type="submit" class="btn btn-dark btn-sm w-100 fw-bold">Registrar Bloque de Trabajo</button>
+                        </form>
+                    </div>
+
+                    <div class="card shadow-sm border-0 bg-white">
+                        <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                            <span>Cronograma de Turnos Activos</span>
+                            <span class="badge {% if total_horas > 44 %}bg-danger{% else %}bg-dark{% endif %} fs-6" title="Límite legal actual en Chile: 44 horas">
+                                Total Semanal: {{ total_horas|floatformat:1 }} hrs
+                            </span>
+                        </div>
+                        
+                        <div class="card-body p-0">
+                            <ul class="list-group list-group-flush">
+                                {% for h in horarios %}
+                                    <li class="list-group-item small d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ h.get_dia_semana_display }}</strong>: {{ h.hora_inicio|time:"H:i" }} a {{ h.hora_fin|time:"H:i" }} 
+                                            <span class="badge bg-info text-dark ms-2">{{ h.sucursal.descripcion }}</span>
+                                        </div>
+                                        
+                                        <form method="POST" class="m-0 p-0" onsubmit="return confirm('¿Confirmas que deseas eliminar este turno de la agenda?');">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="quitar_horario">
+                                            <input type="hidden" name="horario_id" value="{{ h.id_horario }}">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2 fw-bold">✕ Quitar</button>
+                                        </form>
+                                    </li>
+                                {% empty %}
+                                    <li class="list-group-item text-muted text-center py-3">Este profesional no registra bloques horarios asignados aún.</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="alert alert-light text-center border py-5 text-muted">Primero debes registrar los datos esenciales del profesional en el panel izquierdo para poder configurar sus turnos y agendas clínicas.</div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'gestion/js/validar_rut.js' %}"></script>
+    <script src="{% static 'gestion/js/form_profesional.js' %}"></script>
+</body>
+</html>

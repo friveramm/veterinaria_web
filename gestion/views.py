@@ -1,10 +1,32 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db import transaction
+from django.db.models import Q, Sum, Count, Avg # Para consultas complejas
 from django.contrib import messages
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, PermissionDenied
 from django.http import JsonResponse
 from django.utils import timezone
-from .models import Profesional, Servicio, Sucursal, Mascota, Cita, DetalleCita, EntradaCita, Enfermedad
+from .models import Profesional, Servicio, Sucursal, Mascota, Cita, DetalleCita, EntradaCita, Enfermedad, Cargo, HorarioLaboral
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from datetime import datetime, date
+
+# Decoradores para RBAC
+def veterinario_required(view_func):
+    """ Restringe el acceso exclusivamente a usuarios con perfil profesional """
+    def _wrapped_view(request, *args, **kwargs):
+        if request.user.is_authenticated and hasattr(request.user, 'perfil_profesional'):
+            return view_func(request, *args, **kwargs)
+        raise PermissionDenied # Error HTTP 403 (Prohibido)
+    return _wrapped_view
+
+def dueno_required(view_func):
+    """ Restringe el acceso exclusivamente a usuarios con perfil de dueño """
+    def _wrapped_view(request, *args, **kwargs):
+        if request.user.is_authenticated and hasattr(request.user, 'perfil_dueno'):
+            return view_func(request, *args, **kwargs)
+        messages.error(request, "Acceso denegado: Se requiere una cuenta de Cliente para agendar.")
+        return redirect('dashboard_veterinario')
+    return _wrapped_view
 
 def obtener_servicios_por_sucursal(request):
     """
@@ -64,10 +86,16 @@ def obtener_profesionales_por_servicio(request):
     except Exception as e:
         return JsonResponse({'error': f'Error: {str(e)}'}, status=500)
     
+@login_required
+@dueno_required
 def pagina_agendar(request):
     """
-    Renderiza el formulario de agendamiento (GET) y procesa su creación de forma atómica (POST)
+    Formulario público de agendamiento. Filtra estrictamente las mascotas
+    para que el cliente solo vea sus propias mascotas.
     """
+    # Obtener el perfil de dueño del usuario autenticado
+    dueno = request.user.perfil_dueno
+
     if request.method == 'POST':
         mascota_id = request.POST.get('mascota')
         sucursal_id = request.POST.get('sucursal')
@@ -78,7 +106,9 @@ def pagina_agendar(request):
 
         try:
             with transaction.atomic():
-                mascota = Mascota.objects.get(id_mascota=mascota_id)
+                # Seguridad: Validar que la mascota elegida pertenezca a este dueño
+                mascota = get_object_or_404(Mascota, id_mascota=mascota_id, dueno=dueno)
+                
                 sucursal = Sucursal.objects.get(id_sucursal=sucursal_id)
                 profesional = Profesional.objects.get(id_profesional=profesional_id)
                 servicio = Servicio.objects.get(id_servicio=servicio_id)
@@ -116,12 +146,12 @@ def pagina_agendar(request):
             if hasattr(e, 'message_dict'):
                 error_msg = " ".join([f"{v[0]}" for v in e.message_dict.values()])
             messages.error(request, f"Restricción de negocio: {error_msg}")
-            
         except Exception as e:
             messages.error(request, f"Error en el sistema: {str(e)}")
 
+    # Filtro: Traer solo las sucursales y las mascotas del dueño autenticado
     sucursales = Sucursal.objects.all()
-    mascotas = Mascota.objects.all()
+    mascotas = Mascota.objects.filter(dueno=dueno)
     
     context = {
         'sucursales': sucursales,
@@ -129,13 +159,15 @@ def pagina_agendar(request):
     }
     return render(request, 'gestion/agendar.html', context)
 
+@login_required
+@veterinario_required
 def dashboard_veterinario(request):
     """
-    Muestra la agenda de citas del día actual para los profesionales.
+    Intranet Médica: Carga de manera dinámica la agenda exclusiva del
+    profesional logueado en el sistema.
     """
-    pro = Profesional.objects.all()[1]
-    
-    # CORRECCIÓN 2: Obtener la fecha del día de hoy respetando la zona horaria de Chile
+    # Se extrae el profesional mapeado directamente al usuario autenticado
+    pro = request.user.perfil_profesional
     hoy = timezone.localdate()
     
     citas = Cita.objects.filter(
@@ -150,15 +182,19 @@ def dashboard_veterinario(request):
     }
     return render(request, 'gestion/dashboard_vet.html', context)
 
+@login_required
+@veterinario_required
 def atender_cita(request, cita_id):
     """
-    Controlador para atender citas. Permite modificaciones solo dentro del 
-    mismo día calendario del agendamiento por motivos de seguridad y auditoría.
+    Módulo Clínico protegido. Solo permite guardar atenciones a profesionales autorizados.
     """
+    # Adicionalmente se valida que el profesional de la cita sea request.user.perfil_profesional
     cita = get_object_or_404(Cita.objects.select_related('mascota__dueno', 'profesional'), id_cita=cita_id)
-    entrada_existente = getattr(cita, 'entrada', None)
     
-    # CORRECCIÓN 3: Ajustar la validación temporal de la ventana de edición a la zona horaria local
+    if cita.profesional != request.user.perfil_profesional:
+        raise PermissionDenied # Bloqueo si un veterinario intenta atender la cita de otro sin permiso
+        
+    entrada_existente = getattr(cita, 'entrada', None)
     hoy = timezone.localdate()
     puede_editar = (cita.dia == hoy)
 
@@ -167,7 +203,7 @@ def atender_cita(request, cita_id):
         
         if action == 'guardar_atencion':
             if entrada_existente and not puede_editar:
-                messages.error(request, "Seguridad: El plazo legal de modificación para esta consulta (mismo día) ha expirado.")
+                messages.error(request, "Seguridad: El plazo de modificación para esta consulta ha expirado.")
                 return redirect('atender_cita', cita_id=cita_id)
                 
             descripcion = request.POST.get('descripcion')
@@ -175,14 +211,13 @@ def atender_cita(request, cita_id):
                 if entrada_existente:
                     entrada_existente.descripcion = descripcion
                     entrada_existente.save()
-                    messages.success(request, f"Ficha clínica de {cita.mascota.nombre} actualizada correctamente.")
+                    messages.success(request, f"Ficha clínica de {cita.mascota.nombre} actualizada.")
                 else:
                     nueva_entrada = EntradaCita(cita=cita, descripcion=descripcion)
                     nueva_entrada.save()
-                    messages.success(request, f"Ficha clínica de {cita.mascota.nombre} guardada con éxito.")
+                    messages.success(request, f"Ficha clínica de {cita.mascota.nombre} guardada.")
                 
                 return redirect('atender_cita', cita_id=cita.id_cita)
-                
             except Exception as e:
                 messages.error(request, f"Error al procesar la ficha médica: {str(e)}")
 
@@ -192,7 +227,7 @@ def atender_cita(request, cita_id):
                 try:
                     enfermedad = Enfermedad.objects.get(id_enfermedad=enfermedad_id)
                     cita.mascota.enfermedades.add(enfermedad)
-                    messages.success(request, f"Diagnóstico registrado: '{enfermedad.descripcion}' agregado al expediente.")
+                    messages.success(request, f"Diagnóstico registrado: '{enfermedad.descripcion}'.")
                 except Exception as e:
                     messages.error(request, f"Error: {str(e)}")
             return redirect('atender_cita', cita_id=cita_id)
@@ -203,7 +238,7 @@ def atender_cita(request, cita_id):
                 try:
                     enfermedad = Enfermedad.objects.get(id_enfermedad=enfermedad_id)
                     cita.mascota.enfermedades.remove(enfermedad)
-                    messages.success(request, f"Se retiró el diagnóstico '{enfermedad.descripcion}' del perfil del paciente.")
+                    messages.success(request, f"Se retiró el diagnóstico '{enfermedad.descripcion}'.")
                 except Exception as e:
                     messages.error(request, f"Error: {str(e)}")
             return redirect('atender_cita', cita_id=cita_id)
@@ -219,3 +254,300 @@ def atender_cita(request, cita_id):
         'enfermedades_disponibles': enfermedades_disponibles
     }
     return render(request, 'gestion/atender.html', context)
+
+@login_required
+@veterinario_required
+def buscador_pacientes(request):
+    """
+    Motor de búsqueda de pacientes para la intranet médica.
+    Permite buscar por nombre de mascota o RUT del dueño usando objetos Q.
+    """
+    query = request.GET.get('q', '').strip()
+    resultados = []
+
+    if query:
+        # Consulta BD: Busca coincidencias ignorando mayúsculas/minúsculas (icontains)
+        # en el nombre de la mascota OR (|) en el RUT de su dueño relacional.
+        resultados = Mascota.objects.filter(
+            Q(nombre__icontains=query) | Q(dueno__rut__icontains=query)
+        ).select_related('dueno')
+
+    context = {
+        'query': query,
+        'resultados': resultados
+    }
+    return render(request, 'gestion/buscador.html', context)
+
+@login_required
+@veterinario_required
+def historial_clinico(request, mascota_id):
+    """
+    Genera la línea de tiempo clínica de un paciente específico, extrayendo
+    todas las atenciones médicas previas ordenadas cronológicamente de más reciente a más antigua.
+    """
+    # 1. Traer la mascota con sus datos de dueño y enfermedades crónicas
+    mascota = get_object_or_404(
+        Mascota.objects.select_related('dueno').prefetch_related('enfermedades'), 
+        id_mascota=mascota_id
+    )
+
+    # 2. Traer solo las citas que ya tienen una ficha clínica escrita (entrada__isnull=False)
+    # y ordenarlas por fecha y hora descendente (-dia, -hora)
+    historial = Cita.objects.filter(
+        mascota=mascota,
+        entrada__isnull=False
+    ).select_related('entrada', 'profesional', 'sucursal').order_by('-dia', '-hora')
+
+    context = {
+        'mascota': mascota,
+        'historial': historial
+    }
+    return render(request, 'gestion/historial.html', context)
+
+# Decorador de seguridad para la Jefatura
+def jefe_required(view_func):
+    """ Restringe el acceso únicamente a administradores o staff """
+    def _wrapped_view(request, *args, **kwargs):
+        if request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser):
+            return view_func(request, *args, **kwargs)
+        raise PermissionDenied
+    return _wrapped_view
+
+@login_required
+@jefe_required
+def dashboard_jefatura(request):
+    """
+    Dashboard de Analíticas. Ejecuta agregaciones SQL optimizadas en Postgres
+    para calcular métricas del negocio en tiempo real.
+    """
+    hoy = timezone.localdate()
+    # Tomamos desde el día 1 del mes actual, hasta el final del mes
+    import calendar
+    ultimo_dia = calendar.monthrange(hoy.year, hoy.month)[1]
+    primer_dia_mes = hoy.replace(day=1)
+    ultimo_dia_mes = hoy.replace(day=ultimo_dia)
+
+    # 1. Agregación: Dinero de citas ya atendidas (entrada__isnull=False) en este mes
+    recaudacion_mes = Cita.objects.filter(
+        dia__gte=primer_dia_mes, 
+        dia__lte=ultimo_dia_mes,
+        entrada__isnull=False # Solo suma si el veterinario ya guardó la ficha
+    ).aggregate(total=Sum('monto_total'))['total'] or 0
+
+    # 2. Agregación: Cantidad de atenciones totales por sucursal
+    metricas_sucursales = Sucursal.objects.annotate(
+        num_citas=Count('citas')
+    ).order_by('-num_citas')
+
+    # 3. Agregación: Ranking de profesionales (Agenda más llena)
+    ranking_profesionales = Profesional.objects.annotate(
+        num_citas=Count('citas')
+    ).select_related('cargo').order_by('-num_citas')
+
+    # Catálogos para los formularios de creación rápida en el mismo dashboard
+    cargos = Cargo.objects.all()
+    servicios = Servicio.objects.all()
+    sucursales = Sucursal.objects.all()
+
+    # Procesar formularios rápidos enviados desde el dashboard
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'crear_cargo':
+            # 1. Limpiamos los espacios en blanco accidentales
+            descripcion = request.POST.get('descripcion', '').strip()
+            
+            # 2. Buscamos si ya existe ignorando mayúsculas y minúsculas (iexact)
+            if Cargo.objects.filter(descripcion__iexact=descripcion).exists():
+                messages.warning(request, f"El cargo '{descripcion}' ya se encuentra registrado en el catálogo.")
+            else:
+                Cargo.objects.create(descripcion=descripcion)
+                messages.success(request, f"Nuevo cargo '{descripcion}' creado con éxito.")
+                
+            return redirect('dashboard_jefatura')
+            
+        elif action == 'crear_servicio':
+            descripcion = request.POST.get('descripcion', '').strip()
+            
+            # Aplicamos la misma lógica preventiva para los servicios
+            if Servicio.objects.filter(descripcion__iexact=descripcion).exists():
+                messages.warning(request, f"El servicio '{descripcion}' ya existe.")
+            else:
+                monto = request.POST.get('monto')
+                duracion = request.POST.get('duracion')
+                ultimo_serv = Servicio.objects.all().order_by('-n_servicio').first()
+                nuevo_n = (ultimo_serv.n_servicio + 1) if ultimo_serv else 100
+                
+                Servicio.objects.create(
+                    n_servicio=nuevo_n, 
+                    descripcion=descripcion, 
+                    monto=monto, 
+                    duracion_minutos=duracion
+                )
+                messages.success(request, f"Servicio '{descripcion}' incorporado al catálogo.")
+                
+            return redirect('dashboard_jefatura')
+
+    context = {
+        'recaudacion_mes': recaudacion_mes,
+        'metricas_sucursales': metricas_sucursales,
+        'ranking_profesionales': ranking_profesionales,
+        'cargos': cargos,
+        'servicios': servicios,
+        'sucursales': sucursales,
+        'mes_nombre': hoy.strftime('%B %Y')
+    }
+    return render(request, 'gestion/dashboard_jefe.html', context)
+
+def validar_rut_chileno(rut_bruto):
+    """
+    Aplica el algoritmo matemático Módulo 11 para validar si un RUT chileno es real.
+    Devuelve True si es válido, False si es inválido.
+    """
+    rut_limpio = str(rut_bruto).replace(".", "").replace("-", "").strip().upper()
+    if len(rut_limpio) < 8:
+        return False
+        
+    cuerpo = rut_limpio[:-1]
+    dv_ingresado = rut_limpio[-1]
+    
+    if not cuerpo.isdigit():
+        return False
+        
+    # Algoritmo Módulo 11
+    suma = 0
+    multiplo = 2
+    for c in reversed(cuerpo):
+        suma += int(c) * multiplo
+        multiplo = multiplo + 1 if multiplo < 7 else 2
+        
+    dv_esperado = 11 - (suma % 11)
+    if dv_esperado == 11:
+        dv_calculado = '0'
+    elif dv_esperado == 10:
+        dv_calculado = 'K'
+    else:
+        dv_calculado = str(dv_esperado)
+        
+    return dv_calculado == dv_ingresado
+
+@login_required
+@jefe_required
+def administrar_profesional(request, profesional_id=None):
+    profesional = None
+    horarios = []
+    total_horas = 0  # Variable para el contador
+
+    if profesional_id:
+        profesional = get_object_or_404(Profesional.objects.select_related('user', 'cargo', 'sucursal'), id_profesional=profesional_id)
+        horarios = HorarioLaboral.objects.filter(profesional=profesional).select_related('sucursal').order_by('dia_semana', 'hora_inicio')
+
+        # CÁLCULO DE HORAS SEMANALES: hora_fin - hora_inicio por cada bloque
+        for h in horarios:
+            inicio = datetime.combine(date.today(), h.hora_inicio)
+            fin = datetime.combine(date.today(), h.hora_fin)
+            # Diferencia en segundos dividida en 3600 para obtener horas decimales
+            diferencia = (fin - inicio).total_seconds() / 3600
+            total_horas += diferencia
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        # Crear o actualizar un profesional según si ya existe o no, con manejo de transacciones para garantizar la integridad de datos
+        if action == 'guardar_profesional':
+            rut = request.POST.get('rut')
+
+            # Seguridad para backend: Validar que el RUT ingresado sea matemáticamente correcto antes de guardar
+            if not validar_rut_chileno(rut):
+                messages.error(request, "Error de validación: El RUT ingresado no es matemáticamente válido (Dígito verificador incorrecto).")
+                # Si el RUT es inválido, abortamos la creación y recargamos la página
+                if profesional:
+                    return redirect('administrar_profesional', profesional_id=profesional.id_profesional)
+                return redirect('crear_profesional')
+
+            nombre = request.POST.get('nombre')
+            cargo_id = request.POST.get('cargo')
+            sucursal_id = request.POST.get('sucursal')
+            servicios_ids = request.POST.getlist('servicios')
+
+            try:
+                with transaction.atomic():
+                    if profesional:
+                        profesional.rut = rut
+                        profesional.nombre = nombre
+                        profesional.cargo_id = cargo_id
+                        profesional.sucursal_id = sucursal_id
+                        profesional.save()
+                        messages.success(request, f"Datos de {profesional.nombre} actualizados.")
+                    else:
+                        username = request.POST.get('username')
+                        password = request.POST.get('password')
+                        email = request.POST.get('email')
+                        
+                        user = User.objects.create_user(username=username, password=password, email=email, is_staff=True)
+                        
+                        profesional = Profesional.objects.create(
+                            user=user, rut=rut, nombre=nombre, cargo_id=cargo_id, sucursal_id=sucursal_id
+                        )
+                        messages.success(request, f"Profesional {nombre} incorporado al staff con éxito.")
+
+                    profesional.servicios.set(servicios_ids)
+                    
+                return redirect('administrar_profesional', profesional_id=profesional.id_profesional)
+            except Exception as e:
+                messages.error(request, f"Error al procesar personal: {str(e)}")
+
+        # Agregar un bloque de horario laboral para este profesional
+        elif action == 'agregar_horario' and profesional:
+            sucursal_destino_id = request.POST.get('sucursal_horario')
+            dia_semana = int(request.POST.get('dia_semana'))
+            hora_inicio = request.POST.get('hora_inicio')
+            hora_fin = request.POST.get('hora_fin')
+
+            choque_horario = HorarioLaboral.objects.filter(
+                profesional=profesional,
+                dia_semana=dia_semana,
+                hora_inicio__lt=hora_fin,
+                hora_fin__gt=hora_inicio,
+                activo=True
+            ).select_related('sucursal').first()
+
+            if choque_horario:
+                messages.error(request, f"Conflictos de agenda: El profesional ya tiene asignado un turno el mismo día en '{choque_horario.sucursal.descripcion}' dentro del rango solicitado ({choque_horario.hora_inicio} a {choque_horario.hora_fin}).")
+            else:
+                HorarioLaboral.objects.create(
+                    profesional=profesional,
+                    sucursal_id=sucursal_destino_id,
+                    dia_semana=dia_semana,
+                    hora_inicio=hora_inicio,
+                    hora_fin=hora_fin
+                )
+                messages.success(request, "Bloque horario laboral añadido correctamente.")
+            return redirect('administrar_profesional', profesional_id=profesional.id_profesional)
+
+        # Eliminar un bloque de horario específico
+        elif action == 'quitar_horario' and profesional:
+            horario_id = request.POST.get('horario_id')
+            try:
+                turno = HorarioLaboral.objects.get(id_horario=horario_id, profesional=profesional)
+                turno.delete()
+                messages.success(request, "Turno eliminado de la agenda del profesional.")
+            except HorarioLaboral.DoesNotExist:
+                messages.error(request, "El turno no existe o ya fue eliminado.")
+            
+            return redirect('administrar_profesional', profesional_id=profesional.id_profesional)
+
+    cargos = Cargo.objects.all()
+    sucursales = Sucursal.objects.all()
+    servicios = Servicio.objects.all()
+    
+    context = {
+        'profesional': profesional,
+        'horarios': horarios,
+        'total_horas': total_horas,
+        'cargos': cargos,
+        'sucursales': sucursales,
+        'servicios': servicios,
+        'dias_semana': HorarioLaboral.DIAS_SEMANA
+    }
+    return render(request, 'gestion/administrar_profesional.html', context)

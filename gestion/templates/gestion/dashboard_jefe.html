@@ -1,0 +1,139 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Jefatura - Panel Analítico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container my-5">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="text-dark fw-bold">Dirección General del Negocio</h1>
+                <p class="text-muted">Análisis Estadístico y Control de Operaciones</p>
+            </div>
+            <a href="{% url 'crear_profesional' %}" class="btn btn-primary fw-bold">+ Incorporar Nuevo Profesional</a>
+        </div>
+
+        {% if messages %}
+            {% for m in messages %}
+                <div class="alert {% if m.tags == 'warning' %}alert-warning{% elif m.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show" role="alert">
+                    {{ m }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="row g-4 mb-5">
+            <div class="col-md-4">
+                <div class="card border-0 bg-primary text-white shadow-sm">
+                    <div class="card-body p-4">
+                        <h6>RECAUDACIÓN MENSUAL ({{ mes_nombre|upper }})</h6>
+                        <h2 class="fw-bold mb-0">${{ recaudacion_mes }} CLP</h2>
+                        {% comment %} Cálculo nativo en Postgres con SUM y filtros de fecha {% endcomment %}
+                        <small class="text-white-50">Procesado nativamente en Postgres</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-7">
+                <div class="card shadow-sm border-0 bg-white">
+                    <div class="card-header bg-dark text-white p-3"><h5>Ranking de Productividad (Citas Atendidas)</h5></div>
+                    <div class="card-body">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr><th>Médico</th><th>Especialidad</th><th class="text-end">Citas Totales</th><th>Acción</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for p in ranking_profesionales %}
+                                    <tr>
+                                        <td><strong>{{ p.nombre }}</strong></td>
+                                        <td>{{ p.cargo.descripcion }}</td>
+                                        <td class="text-end fw-bold text-primary">{{ p.num_citas }}</td>
+                                        <td><a href="{% url 'administrar_profesional' p.id_profesional %}" class="btn btn-outline-secondary btn-sm">Gestionar Horarios / Servicios</a></td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-5">
+                <div class="card shadow-sm border-0 bg-white mb-4">
+                    <div class="card-header bg-dark text-white p-3"><h5>Demanda por Sucursal</h5></div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            {% for s in metricas_sucursales %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ s.descripcion }}
+                                    <span class="badge bg-primary rounded-pill">{{ s.num_citas }} citas</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 bg-white p-4">
+                    <h5 class="mb-4 border-bottom pb-2">Gestión de Catálogos</h5>
+
+                    <h6 class="text-secondary mb-3 fw-bold">Nuevo Cargo del Staff</h6>
+                    <form method="POST" class="mb-4" id="form-cargo">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="crear_cargo">
+                        <div class="input-group">
+                            <input type="text" id="input-desc-cargo" name="descripcion" class="form-control" placeholder="Ej: Enfermero Jefe..." required>
+                            <button type="submit" id="btn-cargo" class="btn btn-dark">Crear Cargo</button>
+                        </div>
+                        <div class="invalid-feedback" id="feedback-cargo">Debes ingresar un nombre válido.</div>
+                    </form>
+
+                    <h6 class="text-secondary mb-3 fw-bold mt-2">Nueva Especialidad o Servicio Médico</h6>
+                    <form method="POST" id="form-servicio">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="crear_servicio">
+                        
+                        <div class="mb-2 position-relative">
+                            <input type="text" id="input-desc-servicio" name="descripcion" class="form-control" placeholder="Ej: Ecografía Abdominal..." required>
+                            <div class="invalid-feedback text-danger fw-bold" id="feedback-desc-servicio">
+                                La descripción no puede estar vacía ni contener solo espacios.
+                            </div>
+                        </div>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-sm-6">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light fw-bold text-success">$</span>
+                                    <input type="number" id="input-monto" name="monto" class="form-control" placeholder="Valor" required min="7990" step="1">
+                                </div>
+                                <small class="text-danger d-none fw-bold mt-1 d-block" id="feedback-monto">
+                                    El valor mínimo permitido es de $7.990 CLP.
+                                </small>
+                            </div>
+                            
+                            <div class="col-sm-6">
+                                <div class="input-group">
+                                    <input type="number" id="input-duracion" name="duracion" class="form-control" required min="15" step="5" value="15">
+                                    <span class="input-group-text bg-light text-muted">min</span>
+                                </div>
+                                <small class="text-danger d-none fw-bold mt-1 d-block" id="feedback-duracion">
+                                    La duración mínima es de 15 minutos.
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" id="btn-servicio" class="btn btn-primary w-100 fw-bold">Registrar Especialidad</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'gestion/js/dashboard_jefe.js' %}"></script>
+</body>
+</html>

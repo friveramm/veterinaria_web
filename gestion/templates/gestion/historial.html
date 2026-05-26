@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Historial Clínico - {{ mascota.nombre }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Estilos personalizados simples para la línea de tiempo */
+        .timeline {
+            border-left: 3px solid #0d6efd;
+            padding-left: 20px;
+            margin-left: 10px;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background: #0d6efd;
+            border-radius: 50%;
+            left: -29px;
+            top: 5px;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container my-5">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="text-primary">Expediente Clínico</h2>
+            <div>
+                <a href="{% url 'buscador_pacientes' %}" class="btn btn-outline-primary me-2">Buscar Otro</a>
+                <a href="{% url 'dashboard_veterinario' %}" class="btn btn-outline-secondary">Volver al Dashboard</a>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 bg-white">
+                    <div class="card-body">
+                        <h4 class="card-title text-center border-bottom pb-3">{{ mascota.nombre }}</h4>
+                        <ul class="list-unstyled mt-3">
+                            <li class="mb-2"><strong>Especie:</strong> {{ mascota.especie }}</li>
+                            <li class="mb-2"><strong>Edad:</strong> {{ mascota.edad }} años</li>
+                            <li class="mb-2"><strong>Microchip:</strong> {{ mascota.n_chip|default:"No registrado" }}</li>
+                            <li class="mb-2"><strong>Dueño:</strong> {{ mascota.dueno.nombre }}</li>
+                            <li class="mb-2"><strong>Contacto:</strong> {{ mascota.dueno.fono }}</li>
+                        </ul>
+                        
+                        <h6 class="mt-4 text-danger fw-bold">Patologías Crónicas:</h6>
+                        {% if mascota.enfermedades.all %}
+                            <div class="d-flex flex-wrap gap-1">
+                                {% for enf in mascota.enfermedades.all %}
+                                    <span class="badge bg-danger">{{ enf.descripcion }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <span class="text-muted small">Sin antecedentes crónicos registrados.</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card shadow-sm border-0 bg-white">
+                    <div class="card-header bg-dark text-white p-3">
+                        <h5 class="mb-0">Historial de Atenciones Médicas</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        
+                        {% if historial %}
+                            <div class="timeline">
+                                {% for cita in historial %}
+                                    <div class="timeline-item">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h5 class="text-primary mb-0">{{ cita.dia|date:"d \d\e F, Y" }}</h5>
+                                            <span class="badge bg-secondary">Dr. {{ cita.profesional.nombre }}</span>
+                                        </div>
+                                        <h6 class="text-muted small mb-3">
+                                            Sucursal: {{ cita.sucursal.descripcion }} | Bloque: {{ cita.hora|time:"H:i" }}
+                                        </h6>
+                                        <div class="p-3 bg-light border rounded">
+                                            <p class="mb-0" style="white-space: pre-wrap;">{{ cita.entrada.descripcion }}</p>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5 text-muted">
+                                <h5>El paciente no registra atenciones médicas pasadas.</h5>
+                            </div>
+                        {% endif %}
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
