@@ -14,7 +14,7 @@ sucursalSelect.addEventListener('change', function () {
 
     if (!sucursalId) return;
 
-    // Consumir la nueva API de servicios
+    // Consumir API de servicios
     fetch(`/api/servicios/?sucursal_id=${sucursalId}`)
         .then(response => response.json())
         .then(data => {

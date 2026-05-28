@@ -1,11 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db import transaction
-from django.db.models import Q, Sum, Count, Avg # Para consultas complejas
+from django.db.models import Q, ProtectedError, Sum, Count, Avg # Para consultas complejas
 from django.contrib import messages
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.http import JsonResponse
 from django.utils import timezone
-from .models import Profesional, Servicio, Sucursal, Mascota, Cita, DetalleCita, EntradaCita, Enfermedad, Cargo, HorarioLaboral
+from .models import Profesional, Servicio, Sucursal, Mascota, Cita, DetalleCita, EntradaCita, Enfermedad, Cargo, HorarioLaboral, Feedback
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from datetime import datetime, date
@@ -59,7 +59,8 @@ def obtener_servicios_por_sucursal(request):
 def obtener_profesionales_por_servicio(request):
     """
     Endpoint API optimizado que devuelve los profesionales que trabajan 
-    en una sucursal específica Y están capacitados para un servicio.
+    en una sucursal específica, están capacitados para un servicio,
+    Y están actualmente activos en el sistema (no han sido desvinculados).
     Uso: /api/profesionales/?servicio_id=UUID&sucursal_id=UUID
     """
     servicio_id = request.GET.get('servicio_id')
@@ -69,9 +70,11 @@ def obtener_profesionales_por_servicio(request):
         return JsonResponse({'error': 'Se requieren servicio_id y sucursal_id'}, status=400)
     
     try:
+        # Verificar que no esté desvinculado user__is_active=True
         profesionales = Profesional.objects.filter(
             servicios__id_servicio=servicio_id,
-            sucursal_id=sucursal_id
+            sucursal_id=sucursal_id,
+            user__is_active=True
         ).select_related('cargo')
         
         data = [
@@ -387,6 +390,23 @@ def dashboard_jefatura(request):
                 messages.success(request, f"Servicio '{descripcion}' incorporado al catálogo.")
                 
             return redirect('dashboard_jefatura')
+        
+        elif action == 'eliminar_servicio':
+            servicio_id = request.POST.get('servicio_id')
+            try:
+                servicio = Servicio.objects.get(id_servicio=servicio_id)
+                nombre_servicio = servicio.descripcion
+                # Se intenta borrar de la base de datos
+                servicio.delete()
+                messages.success(request, f"El servicio '{nombre_servicio}' fue eliminado del catálogo exitosamente.")
+                
+            except ProtectedError:
+                # Si on_delete=models.PROTECT salta, se atrapa el error
+                messages.error(request, "BLOQUEO DE SEGURIDAD: No puedes eliminar este servicio porque ya existen pacientes agendados o un historial médico asociado. Para dejar de ofrecerlo al público, edita la ficha de tus profesionales y desmarca esta especialidad.")
+            except Exception as e:
+                messages.error(request, f"Error del sistema: {str(e)}")
+                
+            return redirect('dashboard_jefatura')
 
     context = {
         'recaudacion_mes': recaudacion_mes,
@@ -536,6 +556,22 @@ def administrar_profesional(request, profesional_id=None):
                 messages.error(request, "El turno no existe o ya fue eliminado.")
             
             return redirect('administrar_profesional', profesional_id=profesional.id_profesional)
+        
+        # Desvincular profesional: Revocar acceso y eliminar su agenda, pero conservar su historial médico por razones legales
+        elif action == 'dar_de_baja' and profesional:
+            try:
+                with transaction.atomic():
+                    # 1. Quitar el acceso al sistema (No podrá iniciar sesión)
+                    profesional.user.is_active = False
+                    profesional.user.save()
+                    
+                    # 2. Borramos todos sus turnos para que desaparezca de la agenda pública
+                    HorarioLaboral.objects.filter(profesional=profesional).delete()
+                    
+                    messages.success(request, f"El profesional {profesional.nombre} ha sido desvinculado. Su acceso fue revocado y su agenda eliminada, pero su historial médico se mantiene intacto por razones legales.")
+                return redirect('dashboard_jefatura')
+            except Exception as e:
+                messages.error(request, f"Error al desvincular: {str(e)}")
 
     cargos = Cargo.objects.all()
     sucursales = Sucursal.objects.all()
@@ -551,3 +587,56 @@ def administrar_profesional(request, profesional_id=None):
         'dias_semana': HorarioLaboral.DIAS_SEMANA
     }
     return render(request, 'gestion/administrar_profesional.html', context)
+
+@login_required
+@dueno_required
+def historial_cliente(request):
+    """
+    Portal del Cliente: Muestra el historial de atenciones de sus mascotas.
+    Permite dejar una calificación única y no editable por cada atención completada.
+    """
+    dueno = request.user.perfil_dueno
+
+    if request.method == 'POST':
+        cita_id = request.POST.get('cita_id')
+        estrellas = request.POST.get('estrellas')
+        comentario = request.POST.get('comentario', '').strip()
+
+        try:
+            with transaction.atomic():
+                # Validar que la cita pertenece a una mascota de este dueño
+                cita = get_object_or_404(Cita, id_cita=cita_id, mascota__dueno=dueno)
+                
+                # Si ya tiene feedback, se bloquea la opción.
+                if hasattr(cita, 'feedback'):
+                    messages.warning(request, "Restricción de seguridad: Esta atención ya fue calificada y las reseñas no pueden ser modificadas.")
+                else:
+                    # Validar rango de estrellas
+                    estrellas_int = int(estrellas)
+                    if estrellas_int < 1 or estrellas_int > 5:
+                        raise ValidationError("La calificación debe estar entre 1 y 5 estrellas.")
+
+                    Feedback.objects.create(
+                        cita=cita,
+                        n_estrellas=estrellas_int,
+                        descripcion=comentario
+                    )
+                    messages.success(request, f"¡Muchas gracias! Tu evaluación sobre la atención de {cita.mascota.nombre} ha sido registrada.")
+            
+            return redirect('historial_cliente')
+            
+        except ValueError:
+            messages.error(request, "Error de formato en la calificación.")
+        except Exception as e:
+            messages.error(request, f"Error al enviar la evaluación: {str(e)}")
+
+    # Obtener solo las citas completadas (que ya tienen una entrada médica)
+    citas_completadas = Cita.objects.filter(
+        mascota__dueno=dueno,
+        entrada__isnull=False
+    ).select_related('mascota', 'profesional', 'sucursal', 'feedback', 'entrada').order_by('-dia', '-hora')
+
+    context = {
+        'citas': citas_completadas
+    }
+    return render(request, 'gestion/historial_cliente.html', context)

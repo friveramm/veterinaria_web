@@ -8,6 +8,7 @@ urlpatterns = [
     
     # Público
     path('agendar/', views.pagina_agendar, name='pagina_agendar'),
+    path('mis-atenciones/', views.historial_cliente, name='historial_cliente'),
 
     # Intranet de Veterinarios
     path('intranet/dashboard/', views.dashboard_veterinario, name='dashboard_veterinario'),

@@ -10,8 +10,26 @@
     <div class="container my-5">
         
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="text-primary fw-bold">{% if profesional %}Editar Ficha de {{ profesional.nombre }}{% else %}Registrar Nuevo Profesional{% endif %}</h2>
-            <a href="{% url 'dashboard_jefatura' %}" class="btn btn-outline-secondary">Volver al Panel</a>
+            <h2 class="text-primary fw-bold">
+                {% if profesional %}
+                    Editar Ficha de {{ profesional.nombre }}
+                    {% if not profesional.user.is_active %}
+                        <span class="badge bg-danger fs-6 ms-2">DESVINCULADO</span>
+                    {% endif %}
+                {% else %}
+                    Registrar Nuevo Profesional
+                {% endif %}
+            </h2>
+            <div>
+                {% if profesional and profesional.user.is_active %}
+                    <form method="POST" class="d-inline" onsubmit="return confirm('ATENCIÓN: ¿Estás seguro de desvincular a este profesional? Se revocará su acceso al sistema y se borrarán sus turnos futuros.');">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="dar_de_baja">
+                        <button type="submit" class="btn btn-danger me-2 fw-bold">Desvincular Empleado</button>
+                    </form>
+                {% endif %}
+                <a href="{% url 'dashboard_jefatura' %}" class="btn btn-outline-secondary">Volver al Panel</a>
+            </div>
         </div>
 
         {% if messages %}

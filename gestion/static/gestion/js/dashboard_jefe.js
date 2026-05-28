@@ -95,4 +95,14 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     }
+
+    // FORMATEO DE MONTOS EN LA INTERFAZ (Ej: 25000 -> 25.000)
+    // Busca todos los elementos con la clase 'monto-formatear'
+    document.querySelectorAll('.monto-formatear').forEach(function (elemento) {
+        // Obtener el número puro
+        let valor = parseInt(elemento.textContent);
+        if (!isNaN(valor)) {
+            elemento.textContent = new Intl.NumberFormat('es-CL').format(valor);
+        }
+    });
 });

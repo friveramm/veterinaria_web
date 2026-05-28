@@ -1,0 +1,156 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mis Atenciones - Portal Cliente</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Estilos para las estrellas interactivas del Modal */
+        .rating-stars {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: center;
+        }
+        .rating-stars input {
+            display: none;
+        }
+        .rating-stars label {
+            cursor: pointer;
+            font-size: 2.5rem;
+            color: #ddd;
+            padding: 0 5px;
+            transition: color 0.2s;
+        }
+        .rating-stars input:checked ~ label,
+        .rating-stars label:hover,
+        .rating-stars label:hover ~ label {
+            color: #ffc107;
+        }
+        /* Estilos para las estrellas fijas de las citas ya evaluadas */
+        .star-filled { color: #ffc107; }
+        .star-empty { color: #ddd; }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container my-5">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="text-dark fw-bold">Historial de Mis Mascotas</h1>
+                <p class="text-muted">Registro de atenciones completadas y evaluaciones</p>
+            </div>
+            <a href="{% url 'pagina_agendar' %}" class="btn btn-outline-primary fw-bold">Agendar Nueva Cita</a>
+        </div>
+
+        {% if messages %}
+            {% for m in messages %}
+                <div class="alert {% if m.tags == 'warning' %}alert-warning{% elif m.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show">
+                    {{ m }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="card shadow-sm border-0 bg-white">
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for cita in citas %}
+                        <li class="list-group-item p-4">
+                            <div class="row align-items-center">
+                                <!-- Datos Médicos -->
+                                <div class="col-md-7">
+                                    <h5 class="fw-bold mb-1 text-primary">{{ cita.mascota.nombre }} <span class="badge bg-secondary text-light ms-2">{{ cita.dia|date:"d/m/Y" }}</span></h5>
+                                    <p class="mb-1 text-dark"><strong>Profesional:</strong> {{ cita.profesional.nombre }} ({{ cita.sucursal.descripcion }})</p>
+                                    <p class="mb-0 text-muted small"><strong>Ficha Clínica:</strong> {{ cita.entrada.descripcion|truncatechars:100 }}</p>
+                                </div>
+                                
+                                <!-- Sección de Feedback -->
+                                <div class="col-md-5 text-md-end mt-3 mt-md-0">
+                                    {% if cita.feedback %}
+                                        <!-- Si ya calificó, mostramos las estrellas de solo lectura -->
+                                        <div class="mb-1">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= cita.feedback.n_estrellas %}
+                                                    <span class="fs-4 star-filled">★</span>
+                                                {% else %}
+                                                    <span class="fs-4 star-empty">★</span>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                        {% if cita.feedback.descripcion %}
+                                            <p class="small text-muted fst-italic mb-0">"{{ cita.feedback.descripcion }}"</p>
+                                        {% endif %}
+                                    {% else %}
+                                        <!-- Si no ha calificado, mostramos el botón para abrir el Modal -->
+                                        <button class="btn btn-warning fw-bold btn-calificar" data-bs-toggle="modal" data-bs-target="#modalFeedback" data-cita-id="{{ cita.id_cita }}" data-mascota-nombre="{{ cita.mascota.nombre }}">
+                                            Evaluar Atención
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item text-center p-5 text-muted">Aún no tienes atenciones médicas completadas en tu historial.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL DE CALIFICACIÓN -->
+    <div class="modal fade" id="modalFeedback" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <form method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="cita_id" id="modal-cita-id" value="">
+                    
+                    <div class="modal-header bg-warning text-dark border-0">
+                        <h5 class="modal-title fw-bold">Calificar Atención de <span id="modal-mascota-nombre"></span></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    
+                    <div class="modal-body p-4 text-center">
+                        <p class="text-muted mb-2">¿Cómo evaluarías el servicio recibido?</p>
+                        
+                        <!-- Sistema de estrellas con CSS-->
+                        <div class="rating-stars mb-4">
+                            <input type="radio" id="star5" name="estrellas" value="5" required />
+                            <label for="star5">★</label>
+                            
+                            <input type="radio" id="star4" name="estrellas" value="4" />
+                            <label for="star4">★</label>
+                            
+                            <input type="radio" id="star3" name="estrellas" value="3" />
+                            <label for="star3">★</label>
+                            
+                            <input type="radio" id="star2" name="estrellas" value="2" />
+                            <label for="star2">★</label>
+                            
+                            <input type="radio" id="star1" name="estrellas" value="1" />
+                            <label for="star1">★</label>
+                        </div>
+
+                    <div class="form-floating text-start">
+                            <textarea class="form-control" name="comentario" placeholder="Deja un comentario" id="floatingTextarea" style="height: 100px"></textarea>
+                            <label for="floatingTextarea">Comentario opcional...</label>
+                        </div>
+                        <div class="text-end text-muted small mt-1" id="contador-palabras">0 palabras (Máx. 50)</div>
+                        
+                        <small class="text-danger d-block mt-3 fw-bold text-start">Las evaluaciones son definitivas y no pueden ser editadas posteriormente.</small>
+                    </div>
+                    
+                    <div class="modal-footer border-0 bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success fw-bold">Enviar Evaluación</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'gestion/js/historial_cliente.js' %}"></script>
+</body>
+</html>

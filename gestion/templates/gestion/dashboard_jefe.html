@@ -30,7 +30,7 @@
                 <div class="card border-0 bg-primary text-white shadow-sm">
                     <div class="card-body p-4">
                         <h6>RECAUDACIÓN MENSUAL ({{ mes_nombre|upper }})</h6>
-                        <h2 class="fw-bold mb-0">${{ recaudacion_mes }} CLP</h2>
+                        <h2 class="fw-bold mb-0">$<span class="monto-formatear">{{ recaudacion_mes }}</span> CLP</h2>
                         {% comment %} Cálculo nativo en Postgres con SUM y filtros de fecha {% endcomment %}
                         <small class="text-white-50">Procesado nativamente en Postgres</small>
                     </div>
@@ -127,6 +127,29 @@
                         
                         <button type="submit" id="btn-servicio" class="btn btn-primary w-100 fw-bold">Registrar Especialidad</button>
                     </form>
+
+                    <h6 class="text-secondary mt-5 mb-3 fw-bold">Catálogo Actual de Servicios</h6>
+                    <div class="list-group shadow-sm" style="max-height: 250px; overflow-y: auto;">
+                        {% for s in servicios %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center bg-light">
+                                <div>
+                                    <span class="fw-bold text-dark d-block" style="font-size: 0.9rem;">{{ s.descripcion }}</span>
+                                    <span class="badge bg-success">$<span class="monto-formatear">{{ s.monto }}</span> CLP</span>
+                                    <span class="badge bg-secondary"><small>{{ s.duracion_minutos }} min</small></span>
+                                </div>
+                                
+                                <form method="POST" class="m-0" onsubmit="return confirm('¿Estás seguro de que deseas eliminar la especialidad: {{ s.descripcion }}?');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="eliminar_servicio">
+                                    <input type="hidden" name="servicio_id" value="{{ s.id_servicio }}">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm fw-bold px-2 py-1" title="Eliminar Servicio">✕</button>
+                                </form>
+                            </div>
+                        {% empty %}
+                            <div class="text-center p-3 text-muted">No hay servicios registrados.</div>
+                        {% endfor %}
+                    </div>
+                    </div>
                 </div>
             </div>
         </div>
