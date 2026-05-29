@@ -655,3 +655,43 @@ def historial_cliente(request):
         'citas': citas_completadas
     }
     return render(request, 'gestion/historial_cliente.html', context)
+
+def index(request):
+    """
+    Página de inicio pública de la veterinaria.
+    Muestra información de la clínica, servicios y reseñas.
+    """
+    servicios_disponibles = Servicio.objects.all().order_by('descripcion')
+    
+    # Traer los últimos 3 feedbacks positivos (4 o 5 estrellas) para mostrarlos
+    mejores_feedbacks = Feedback.objects.filter(
+        n_estrellas__gte=4
+    ).select_related('cita__mascota__dueno').order_by('-id_feedback')[:3]
+    
+    context = {
+        'servicios': servicios_disponibles,
+        'feedbacks': mejores_feedbacks, # Pasar feedbacks a la plantilla
+    }
+    return render(request, 'gestion/index.html', context)
+
+@login_required
+def redireccionar_por_rol(request):
+    """
+    Vista intermedia (Router) que redirige al usuario a su panel correspondiente
+    según su rol/perfil asignado tras iniciar sesión de forma exitosa.
+    """
+    # 1. Si es superuser
+    if request.user.is_superuser:
+        return redirect('dashboard_jefatura')
+        
+    # 2. Si es veterinario
+    elif hasattr(request.user, 'perfil_profesional'):
+        return redirect('dashboard_veterinario')
+        
+    # 3. Si es cliente
+    elif hasattr(request.user, 'perfil_dueno'):
+        return redirect('historial_cliente')
+        
+    # 4. Si es usuario común
+    else:
+        return redirect('index')

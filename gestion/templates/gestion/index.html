@@ -1,0 +1,153 @@
+{% extends 'gestion/base_clientes.html' %}
+{% load static %}
+
+{% block title %}Bienvenidos a Mi Veterinaria - Clínica Veterinaria{% endblock %}
+
+{% block content %}
+    <header class="hero-section shadow-sm mb-5">
+        <div class="container text-center">
+            <h1 class="display-3 fw-bold mb-3">El cuidado que tu mascota merece</h1>
+            <p class="lead mb-4 fs-4">Especialistas médicos dedicados a mantener la salud, vitalidad y felicidad de tus compañeros de vida.</p>
+            
+            <div class="d-flex justify-content-center gap-3">
+                {% if request.user.is_authenticated %}
+                    <a href="{% url 'pagina_agendar' %}" class="btn btn-warning btn-lg fw-bold text-dark px-4 py-3 shadow-sm">
+                        Agendar Cita Médica Ahora
+                    </a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-light btn-lg fw-bold text-primary px-4 py-3 shadow-sm">
+                        Reserva tu Hora Online
+                    </a>
+                    <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg fw-bold px-4 py-3">
+                        Acceso Personal Clínico
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <section class="container my-5">
+        <div class="row g-4 text-center">
+            <div class="col-md-4">
+                <div class="p-4 rounded bg-white shadow-sm h-100">
+                    <div class="fs-1 text-primary mb-2">🩺</div>
+                    <h4 class="fw-bold">Profesionales Expertos</h4>
+                    <p class="text-muted mb-0">Médicos cirujanos capacitados y en constante actualización para entregar diagnósticos sumamente rigurosos.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-4 rounded bg-white shadow-sm h-100">
+                    <div class="fs-1 text-success mb-2">🕒</div>
+                    <h4 class="fw-bold">Gestión de Tiempos</h4>
+                    <p class="text-muted mb-0">Bloques de atención regulados de mínimo 15 minutos para asegurar que tu mascota reciba toda la atención necesaria.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-4 rounded bg-white shadow-sm h-100">
+                    <div class="fs-1 text-warning mb-2">🔒</div>
+                    <h4 class="fw-bold">Transparencia Total</h4>
+                    <p class="text-muted mb-0">Portal de autogestión donde podrás evaluar inmutablemente cada atención y revisar los registros de tus mascotas.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="container my-5">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold text-dark">Nuestros Servicios Médicos</h2>
+            <p class="text-muted">Precios y coberturas estandarizadas en todas nuestras sucursales operativas</p>
+        </div>
+
+        <div class="row g-4 justify-content-center">
+            {% for s in servicios %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 border-0 shadow-sm bg-white service-card">
+                        <div class="card-body p-4 d-flex flex-column justify-content-between">
+                            <div>
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <h5 class="fw-bold text-primary mb-0 me-2">{{ s.descripcion }}</h5>
+                                    <span class="badge bg-light text-muted border px-2 py-1 small">
+                                        {{ s.duracion_minutos }} min
+                                    </span>
+                                </div>
+                                <p class="text-muted small">Procedimiento clínico certificado realizado bajo estrictos estándares sanitarios institucionales.</p>
+                            </div>
+                            <div class="border-top pt-3 mt-3 d-flex justify-content-between align-items-center">
+                                <span class="text-muted small fw-bold">Valor del Servicio:</span>
+                                <h4 class="fw-bold text-success mb-0">
+                                    $<span class="monto-formatear">{{ s.monto }}</span> <small class="fs-6 text-muted">{{ s.divisa }}</small>
+                                </h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12 text-center p-4 text-muted">
+                    No hay servicios registrados en el catálogo clínico actualmente.
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="container my-5 py-4 border-top">
+        <div class="row g-5">
+            
+            <div class="col-lg-6">
+                <h3 class="fw-bold text-dark mb-4">Experiencias Recientes en nuestra Clínica</h3>
+                <div class="d-flex flex-column gap-3">
+                    {% for f in feedbacks %}
+                        <div class="card border-0 shadow-sm bg-light">
+                            <div class="card-body p-4">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="fw-bold text-primary mb-0">
+                                        {{ f.cita.mascota.dueno.nombre }} <span class="text-muted fw-normal small">(Dueño/a de {{ f.cita.mascota.nombre }})</span>
+                                    </h6>
+                                    <div class="text-warning fs-5" style="letter-spacing: 2px;">
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= f.n_estrellas %}★{% else %}<span class="text-secondary opacity-25">★</span>{% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <p class="text-muted fst-italic mb-0">"{{ f.descripcion }}"</p>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="alert alert-secondary border-0 text-muted text-center py-4">
+                            Aún no hay reseñas registradas en nuestro portal interno.
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <h3 class="fw-bold text-dark mb-4">Nuestra reputación en Google</h3>
+                <div class="card border-0 shadow h-100 bg-white text-center d-flex flex-column justify-content-center p-5" style="border-radius: 20px;">
+                    <div class="mb-3">
+                        <img src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png" alt="Google Logo" style="width: 60px;">
+                    </div>
+                    
+                    <h1 class="display-2 fw-bold text-dark mb-0">3.7</h1>
+                    
+                    <div class="text-warning fs-2 mb-2">
+                        ★★★
+                    </div>
+                    
+                    <p class="text-muted mb-4 px-md-4">
+                        Basado en las opiniones y calificaciones de nuestra maravillosa comunidad en Google Maps.
+                    </p>
+                    
+                    <div>
+                        <a href="https://www.google.com/maps/place/Tri%C3%A1ngulo+de+las+Bermudas/@24.9999996,-71,15z/data=!3m1!4b1!4m6!3m5!1s0x89451ab5034cb7ab:0xb600ecf3df7aca4d!8m2!3d25!4d-71!16zL20vMDFqcGw?entry=ttu&g_ep=EgoyMDI2MDUyNy4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-lg fw-bold rounded-pill px-4 shadow-sm">
+                            Leer reseñas en Google
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'gestion/js/index.js' %}"></script>
+{% endblock %}
