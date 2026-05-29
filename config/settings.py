@@ -121,6 +121,6 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# Rutas de redirección de Login
-LOGIN_REDIRECT_URL = '/intranet/dashboard/'
-LOGOUT_REDIRECT_URL = '/accounts/login/'
+# Rutas Login/Logout
+LOGIN_REDIRECT_URL = 'redireccionar_por_rol'
+LOGOUT_REDIRECT_URL = 'index'

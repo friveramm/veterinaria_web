@@ -1,5 +1,4 @@
-{% extends 'gestion/base_jefatura.html' %}
-{% load static %}
+{% extends 'gestion/base_jefatura.html' %} {% load static %}
 
 {% block title %}Jefatura - Panel Analítico{% endblock %}
 
@@ -8,27 +7,27 @@
         
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h1 class="text-dark fw-bold">Dirección General del Negocio</h1>
-                <p class="text-muted">Análisis Estadístico y Control de Operaciones</p>
+                <h1 class="text-primary fw-bold">Dirección General del Negocio</h1>
+                <p class="text-muted mb-0">Análisis Estadístico y Control de Operaciones</p>
             </div>
-            <a href="{% url 'crear_profesional' %}" class="btn btn-primary fw-bold">+ Incorporar Nuevo Profesional</a>
+            <a href="{% url 'crear_profesional' %}" class="btn btn-primary fw-bold shadow-sm">+ Incorporar Nuevo Profesional</a>
         </div>
 
         {% if messages %}
             {% for m in messages %}
-                <div class="alert {% if m.tags == 'warning' %}alert-warning{% elif m.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show" role="alert">
+                <div class="alert {% if m.tags == 'warning' %}alert-warning{% elif m.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show shadow-sm" role="alert">
                     {{ m }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             {% endfor %}
         {% endif %}
 
         <div class="row g-4 mb-5">
-            <div class="col-md-4">
-                <div class="card border-0 bg-primary text-white shadow-sm">
+            <div class="col-md-5 col-lg-4">
+                <div class="card border-0 bg-primary text-white shadow bg-dark-purple">
                     <div class="card-body p-4">
-                        <h6>RECAUDACIÓN MENSUAL ({{ mes_nombre|upper }})</h6>
-                        <h2 class="fw-bold mb-0">$<span class="monto-formatear">{{ recaudacion_mes }}</span> CLP</h2>
-                        <small class="text-white-50">Procesado nativamente en Postgres</small>
+                        <h6 class="fw-bold text-white-50 mb-2">RECAUDACIÓN MENSUAL ({{ mes_nombre|upper }})</h6>
+                        <h2 class="fw-bold mb-0 display-6">$<span class="monto-formatear">{{ recaudacion_mes }}</span> CLP</h2>
+                        <small class="text-white-50 mt-3 d-block border-top border-light pt-2 opacity-50">Procesado nativamente en Postgres</small>
                     </div>
                 </div>
             </div>
@@ -36,114 +35,137 @@
 
         <div class="row g-4">
             <div class="col-md-7">
-                <div class="card shadow-sm border-0 bg-white">
-                    <div class="card-header bg-dark text-white p-3"><h5>Ranking de Productividad (Citas Atendidas)</h5></div>
-                    <div class="card-body">
-                        <table class="table align-middle">
-                            <thead>
-                                <tr><th>Médico</th><th>Especialidad</th><th class="text-end">Citas Totales</th><th>Acción</th></tr>
-                            </thead>
-                            <tbody>
-                                {% for p in ranking_profesionales %}
+                <div class="card shadow border-0 bg-white h-100 overflow-hidden">
+                    <div class="card-header bg-dark-purple text-white p-3">
+                        <h5 class="mb-0 fw-bold">Ranking de Productividad (Citas Atendidas)</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light text-muted">
                                     <tr>
-                                        <td><strong>{{ p.nombre }}</strong></td>
-                                        <td>{{ p.cargo.descripcion }}</td>
-                                        <td class="text-end fw-bold text-primary">{{ p.num_citas }}</td>
-                                        <td><a href="{% url 'administrar_profesional' p.id_profesional %}" class="btn btn-outline-secondary btn-sm">Gestionar Horarios / Servicios</a></td>
+                                        <th class="ps-4">Médico</th>
+                                        <th>Especialidad</th>
+                                        <th class="text-center">Citas Totales</th>
+                                        <th class="text-center pe-4">Acción</th>
                                     </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {% for p in ranking_profesionales %}
+                                        <tr>
+                                            <td class="ps-4"><strong class="text-dark">{{ p.nombre }}</strong></td>
+                                            <td><span class="text-muted">{{ p.cargo.descripcion }}</span></td>
+                                            <td class="text-center fw-bold text-primary fs-5">{{ p.num_citas }}</td>
+                                            <td class="text-center pe-4">
+                                                <a href="{% url 'administrar_profesional' p.id_profesional %}" class="btn btn-outline-primary btn-sm fw-bold shadow-sm">Gestionar</a>
+                                            </td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr>
+                                            <td colspan="4" class="text-center py-5 text-muted">No hay profesionales registrados en el sistema.</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="col-md-5">
-                <div class="card shadow-sm border-0 bg-white mb-4">
-                    <div class="card-header bg-dark text-white p-3"><h5>Demanda por Sucursal</h5></div>
-                    <div class="card-body">
+                
+                <div class="card shadow border-0 bg-white mb-4 overflow-hidden">
+                    <div class="card-header bg-dark-purple text-white p-3">
+                        <h5 class="mb-0 fw-bold">Demanda por Sucursal</h5>
+                    </div>
+                    <div class="card-body p-0">
                         <ul class="list-group list-group-flush">
                             {% for s in metricas_sucursales %}
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    {{ s.descripcion }}
-                                    <span class="badge bg-primary rounded-pill">{{ s.num_citas }} citas</span>
+                                <li class="list-group-item d-flex justify-content-between align-items-center p-3 border-bottom">
+                                    <span class="fw-bold text-secondary">{{ s.descripcion }}</span>
+                                    <span class="badge bg-primary rounded-pill fs-6 px-3 shadow-sm">{{ s.num_citas }} citas</span>
                                 </li>
                             {% endfor %}
                         </ul>
                     </div>
                 </div>
 
-                <div class="card shadow-sm border-0 bg-white p-4">
-                    <h5 class="mb-4 border-bottom pb-2">Gestión de Catálogos</h5>
-
-                    <h6 class="text-secondary mb-3 fw-bold">Nuevo Cargo del Staff</h6>
-                    <form method="POST" class="mb-4" id="form-cargo">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="crear_cargo">
-                        <div class="input-group">
-                            <input type="text" id="input-desc-cargo" name="descripcion" class="form-control" placeholder="Ej: Enfermero Jefe..." required>
-                            <button type="submit" id="btn-cargo" class="btn btn-dark">Crear Cargo</button>
-                        </div>
-                        <div class="invalid-feedback" id="feedback-cargo">Debes ingresar un nombre válido.</div>
-                    </form>
-
-                    <h6 class="text-secondary mb-3 fw-bold mt-2">Nueva Especialidad o Servicio Médico</h6>
-                    <form method="POST" id="form-servicio">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="crear_servicio">
+                <div class="card shadow border-0 bg-white overflow-hidden">
+                    <div class="card-header bg-dark-purple text-white p-3">
+                        <h5 class="mb-0 fw-bold">Gestión de Catálogos</h5>
+                    </div>
+                    
+                    <div class="card-body p-4 bg-light">
                         
-                        <div class="mb-2 position-relative">
-                            <input type="text" id="input-desc-servicio" name="descripcion" class="form-control" placeholder="Ej: Ecografía Abdominal..." required>
-                            <div class="invalid-feedback text-danger fw-bold" id="feedback-desc-servicio">
-                                La descripción no puede estar vacía ni contener solo espacios.
+                        <h6 class="text-primary mb-2 fw-bold">Nuevo Cargo del Staff</h6>
+                        <form method="POST" class="mb-4 bg-white p-3 rounded shadow-sm border" id="form-cargo">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="crear_cargo">
+                            <div class="input-group">
+                                <input type="text" id="input-desc-cargo" name="descripcion" class="form-control border-primary" placeholder="Ej: Ténico Veterinario..." required>
+                                <button type="submit" id="btn-cargo" class="btn btn-primary fw-bold">Crear Cargo</button>
                             </div>
-                        </div>
-                        
-                        <div class="row g-2 mb-3">
-                            <div class="col-sm-6">
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light fw-bold text-success">$</span>
-                                    <input type="number" id="input-monto" name="monto" class="form-control" placeholder="Valor" required min="7990" step="1">
+                            <div class="invalid-feedback" id="feedback-cargo">Debes ingresar un nombre válido.</div>
+                        </form>
+
+                        <h6 class="text-primary mb-2 fw-bold mt-4">Nueva Especialidad o Servicio Médico</h6>
+                        <form method="POST" id="form-servicio" class="bg-white p-3 rounded shadow-sm border mb-4">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="crear_servicio">
+                            
+                            <div class="mb-3 position-relative">
+                                <input type="text" id="input-desc-servicio" name="descripcion" class="form-control border-primary" placeholder="Ej: Consulta General..." required>
+                                <div class="invalid-feedback text-danger fw-bold" id="feedback-desc-servicio">
+                                    La descripción no puede estar vacía.
                                 </div>
-                                <small class="text-danger d-none fw-bold mt-1 d-block" id="feedback-monto">
-                                    El valor mínimo permitido es de $7.990 CLP.
-                                </small>
                             </div>
                             
-                            <div class="col-sm-6">
-                                <div class="input-group">
-                                    <input type="number" id="input-duracion" name="duracion" class="form-control" required min="15" step="5" value="15">
-                                    <span class="input-group-text bg-light text-muted">min</span>
-                                </div>
-                                <small class="text-danger d-none fw-bold mt-1 d-block" id="feedback-duracion">
-                                    La duración mínima es de 15 minutos.
-                                </small>
-                            </div>
-                        </div>
-                        
-                        <button type="submit" id="btn-servicio" class="btn btn-primary w-100 fw-bold">Registrar Especialidad</button>
-                    </form>
-
-                    <h6 class="text-secondary mt-5 mb-3 fw-bold">Catálogo Actual de Servicios</h6>
-                    <div class="list-group shadow-sm" style="max-height: 250px; overflow-y: auto;">
-                        {% for s in servicios %}
-                            <div class="list-group-item d-flex justify-content-between align-items-center bg-light">
-                                <div>
-                                    <span class="fw-bold text-dark d-block" style="font-size: 0.9rem;">{{ s.descripcion }}</span>
-                                    <span class="badge bg-success">$<span class="monto-formatear">{{ s.monto }}</span> CLP</span>
-                                    <span class="badge bg-secondary"><small>{{ s.duracion_minutos }} min</small></span>
+                            <div class="row g-2 mb-3">
+                                <div class="col-sm-6">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-primary text-white fw-bold">$</span>
+                                        <input type="number" id="input-monto" name="monto" class="form-control border-primary" placeholder="Valor" required min="7990" step="1">
+                                    </div>
+                                    <small class="text-danger d-none fw-bold mt-1 d-block" id="feedback-monto">
+                                        El valor mínimo es $7.990 CLP.
+                                    </small>
                                 </div>
                                 
-                                <form method="POST" class="m-0" onsubmit="return confirm('¿Estás seguro de que deseas eliminar la especialidad: {{ s.descripcion }}?');">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="action" value="eliminar_servicio">
-                                    <input type="hidden" name="servicio_id" value="{{ s.id_servicio }}">
-                                    <button type="submit" class="btn btn-outline-danger btn-sm fw-bold px-2 py-1" title="Eliminar Servicio">✕</button>
-                                </form>
+                                <div class="col-sm-6">
+                                    <div class="input-group">
+                                        <input type="number" id="input-duracion" name="duracion" class="form-control border-primary" required min="15" step="5" value="15">
+                                        <span class="input-group-text bg-light text-muted fw-bold">min</span>
+                                    </div>
+                                    <small class="text-danger d-none fw-bold mt-1 d-block" id="feedback-duracion">
+                                        Mínimo 15 minutos.
+                                    </small>
+                                </div>
                             </div>
-                        {% empty %}
-                            <div class="text-center p-3 text-muted">No hay servicios registrados.</div>
-                        {% endfor %}
+                            
+                            <button type="submit" id="btn-servicio" class="btn btn-primary w-100 fw-bold shadow-sm">Registrar Especialidad</button>
+                        </form>
+
+                        <h6 class="text-dark mb-3 fw-bold">Catálogo Actual de Servicios</h6>
+                        <div class="list-group shadow-sm border" style="max-height: 250px; overflow-y: auto;">
+                            {% for s in servicios %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center bg-white border-bottom">
+                                    <div>
+                                        <span class="fw-bold text-dark d-block" style="font-size: 0.9rem;">{{ s.descripcion }}</span>
+                                        <span class="badge bg-success">$<span class="monto-formatear">{{ s.monto }}</span> CLP</span>
+                                        <span class="badge bg-secondary"><small>{{ s.duracion_minutos }} min</small></span>
+                                    </div>
+                                    
+                                    <form method="POST" class="m-0" onsubmit="return confirm('¿Estás seguro de que deseas eliminar la especialidad: {{ s.descripcion }}?');">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="eliminar_servicio">
+                                        <input type="hidden" name="servicio_id" value="{{ s.id_servicio }}">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm fw-bold px-2 py-1 shadow-sm" title="Eliminar Servicio">✕</button>
+                                    </form>
+                                </div>
+                            {% empty %}
+                                <div class="text-center p-3 text-muted bg-white">No hay servicios registrados.</div>
+                            {% endfor %}
+                        </div>
                     </div>
                 </div>
             </div>

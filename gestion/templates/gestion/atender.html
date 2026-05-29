@@ -10,7 +10,7 @@
             <div class="row justify-content-center mb-3">
                 <div class="col-md-12">
                     {% for message in messages %}
-                        <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %} alert-dismissible fade show" role="alert">
+                        <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %} alert-dismissible fade show shadow-sm" role="alert">
                             {{ message }}
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
@@ -21,35 +21,35 @@
 
         <div class="row g-4">
             <div class="col-lg-7">
-                <div class="card shadow border-0 h-100">
-                    <div class="card-header bg-primary text-white p-3 d-flex justify-content-between align-items-center">
-                        <h4 class="mb-0">Consulta Clínica: {{ cita.mascota.nombre }}</h4>
+                <div class="card shadow border-0 h-100 bg-white">
+                    <div class="card-header bg-dark-purple text-white p-3 d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0 fw-bold">Consulta Clínica: <span class="nombre-mascota-highlight">{{ cita.mascota.nombre }}</span></h4>
                         
                         {% if not entrada %}
-                            <span class="badge bg-success fs-6">📝 Nueva Consulta</span>
+                            <span class="badge bg-primary border border-light fs-6 shadow-sm">Nueva Consulta</span>
                         {% elif entrada and puede_editar %}
-                            <span class="badge bg-warning text-dark fs-6">⏳ Ventana de Edición Activa</span>
+                            <span class="badge bg-light text-primary border border-primary fs-6 shadow-sm">Ventana de Edición Activa</span>
                         {% else %}
-                            <span class="badge bg-danger fs-6">🔒 Registro Histórico Congelado</span>
+                            <span class="badge bg-danger fs-6 shadow-sm">Registro Histórico Desactivado</span>
                         {% endif %}
                     </div>
                     <div class="card-body p-4 d-flex flex-column justify-content-between">
                         <div>
-                            <h5>Resumen de la Cita</h5>
+                            <h5 class="fw-bold text-dark">Resumen de la Cita</h5>
                             <p class="text-muted">
                                 Dueño de la Mascota: <strong>{{ cita.mascota.dueno.nombre }}</strong><br>
                                 Cita N° {{ cita.n_cita }} (Horario: {{ cita.hora|time:"H:i" }} - {{ cita.hora_fin|time:"H:i" }})
                             </p>
-                            <hr>
+                            <hr class="text-muted">
 
                             <form method="POST" id="form-atencion">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="guardar_atencion">
                                 
                                 <div class="mb-3">
-                                    <label class="form-label fw-bold">Anamnesis, Diagnóstico y Receta Médica</label>
+                                    <label class="form-label fw-bold text-primary">Anamnesis, Diagnóstico y Receta Médica</label>
                                     
-                                    <textarea class="form-control {% if entrada and not puede_editar %}bg-white text-muted{% endif %}" 
+                                    <textarea class="form-control bg-light {% if entrada and not puede_editar %}bg-white text-muted border-0 shadow-none{% endif %}" 
                                                 name="descripcion" 
                                                 id="ficha-descripcion"
                                                 rows="10" 
@@ -63,23 +63,23 @@
                                     </div>
                                     
                                     {% if entrada and puede_editar %}
-                                        <small class="text-warning d-block mt-2">⚠️ Nota: Este registro médico ya fue guardado, pero puedes modificarlo hasta el final del día de hoy.</small>
+                                        <small class="text-primary d-block mt-2 fw-bold">⚠️ Nota: Este registro médico ya fue guardado, pero puedes modificarlo hasta el final del día de hoy.</small>
                                     {% elif entrada and not puede_editar %}
-                                        <small class="text-danger d-block mt-2">🔒 Este registro ha sido auditado y sellado. No admite modificaciones adicionales.</small>
+                                        <small class="text-danger d-block mt-2 fw-bold">🔒 Este registro ha sido auditado y sellado. No admite modificaciones adicionales.</small>
                                     {% endif %}
                                 </div>
                             </form>
                         </div>
 
-                        <div class="d-flex justify-content-between mt-4">
-                            <a href="{% url 'dashboard_veterinario' %}" class="btn btn-outline-secondary">Volver a la Agenda</a>
+                        <div class="d-flex justify-content-between mt-4 border-top pt-3">
+                            <a href="{% url 'dashboard_veterinario' %}" class="btn btn-outline-secondary fw-bold">Volver a la Agenda</a>
                             
                             {% if not entrada %}
-                                <button type="submit" form="form-atencion" class="btn btn-success px-4">
+                                <button type="submit" form="form-atencion" class="btn btn-primary px-4 fw-bold shadow-sm">
                                     Guardar Ficha Clínica
                                 </button>
                             {% elif entrada and puede_editar %}
-                                <button type="submit" id="btn-actualizar" form="form-atencion" class="btn btn-warning text-dark fw-bold px-4" 
+                                <button type="submit" id="btn-actualizar" form="form-atencion" class="btn btn-primary fw-bold px-4 shadow-sm" 
                                         onclick="return confirm('¿Confirmas que deseas reescribir y actualizar los datos originales de esta consulta médica?');">
                                     Actualizar Cambios
                                 </button>
@@ -90,26 +90,26 @@
             </div>
 
             <div class="col-lg-5">
-                <div class="card shadow border-0 h-100">
-                    <div class="card-header bg-dark text-white p-3">
-                        <h4 class="mb-0">Historial Clínico Patológico</h4>
+                <div class="card shadow border-0 h-100 bg-white">
+                    <div class="card-header bg-dark-purple text-white p-3">
+                        <h4 class="mb-0 fw-bold">Historial Clínico Patológico</h4>
                     </div>
                     <div class="card-body p-4">
-                        <h5 class="mb-3 text-secondary">Enfermedades Cronificadas</h5>
+                        <h5 class="mb-3 text-dark fw-bold">Enfermedades Diagnosticadas</h5>
                         
                         <div class="mb-4">
                             {% if enfermedades_actuales %}
                                 <ul class="list-group">
                                     {% for enf in enfermedades_actuales %}
-                                        <li class="list-group-item d-flex justify-content-between align-items-center bg-light border-start border-danger border-3">
-                                            <span><strong>{{ enf.descripcion }}</strong></span>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center bg-light border-start border-danger border-4 my-1 rounded">
+                                            <span class="text-dark"><strong>{{ enf.descripcion }}</strong></span>
                                             
                                             {% if puede_editar or not entrada %}
                                                 <form method="POST" style="display:inline;" onsubmit="return confirm('RETIRAR DIAGNÓSTICO: ¿Confirmas que deseas quitar la enfermedad \u0027{{ enf.descripcion }}\u0027 del expediente del paciente? Esto alterará sus antecedentes.');">
                                                     {% csrf_token %}
                                                     <input type="hidden" name="action" value="quitar_enfermedad">
                                                     <input type="hidden" name="enfermedad_id" value="{{ enf.id_enfermedad }}">
-                                                    <button type="submit" class="btn btn-outline-danger btn-sm py-0">Quitar</button>
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm py-0 fw-bold">Quitar</button>
                                                 </form>
                                             {% else %}
                                                 <span class="badge bg-secondary text-white">Permanente</span>
@@ -118,22 +118,22 @@
                                     {% endfor %}
                                 </ul>
                             {% else %}
-                                <div class="alert alert-info py-2 mb-0">No registra patologías activas en el expediente.</div>
+                                <div class="alert alert-light border text-muted py-2 mb-0">No registra patologías activas en el expediente.</div>
                             {% endif %}
                         </div>
 
-                        <hr>
+                        <hr class="text-muted my-4">
 
-                        <h5 class="text-secondary mb-3">Diagnosticar Nueva Patología</h5>
+                        <h5 class="text-dark fw-bold mb-3">Diagnosticar Nueva Patología</h5>
                         
                         {% if puede_editar or not entrada %}
-                            <form method="POST" onsubmit="return confirm('🛡️ SENSIDILIDAD DE DATOS: ¿Estás seguro de incorporar de forma oficial esta patología al expediente histórico permanente de la mascota?');">
+                            <form method="POST" class="bg-light p-3 rounded border" onsubmit="return confirm('SENSIDILIDAD DE DATOS: ¿Estás seguro de incorporar de forma oficial esta patología al expediente histórico permanente de la mascota?');">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="agregar_enfermedad">
                                 
                                 <div class="mb-3">
-                                    <label class="form-label text-muted">Seleccionar del Catálogo Base</label>
-                                    <select class="form-select" name="enfermedad_id" required {% if enfermedades_disponibles.count == 0 %}disabled{% endif %}>
+                                    <label class="form-label text-muted small fw-bold">Seleccionar del Catálogo Base</label>
+                                    <select class="form-select border-primary" name="enfermedad_id" required {% if enfermedades_disponibles.count == 0 %}disabled{% endif %}>
                                         <option value="">Seleccionar Patología</option>
                                         {% for enf_dis in enfermedades_disponibles %}
                                             <option value="{{ enf_dis.id_enfermedad }}">{{ enf_dis.descripcion }}</option>
@@ -141,7 +141,7 @@
                                     </select>
                                 </div>
                                 
-                                <button type="submit" class="btn btn-warning btn-sm w-100 fw-bold text-dark" {% if enfermedades_disponibles.count == 0 %}disabled{% endif %}>
+                                <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold shadow-sm" {% if enfermedades_disponibles.count == 0 %}disabled{% endif %}>
                                     Registrar Diagnóstico Médico
                                 </button>
                             </form>
@@ -160,5 +160,4 @@
 
 {% block extra_js %}
     <script src="{% static 'gestion/js/atencion.js' %}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-{% endblock %}
+    {% endblock %}

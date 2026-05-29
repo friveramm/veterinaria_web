@@ -31,7 +31,7 @@
                             <li class="mb-2"><strong>Contacto:</strong> {{ mascota.dueno.fono }}</li>
                         </ul>
                         
-                        <h6 class="mt-4 text-danger fw-bold">Patologías Crónicas:</h6>
+                        <h6 class="mt-4 text-danger fw-bold">Patologías:</h6>
                         {% if mascota.enfermedades.all %}
                             <div class="d-flex flex-wrap gap-1">
                                 {% for enf in mascota.enfermedades.all %}

@@ -1,0 +1,184 @@
+/* TEMA GLOBAL DE LA CLÍNICA (MORADO OSCURO CORPORATIVO Y GRIS) */
+:root {
+    --bs-primary: #2d2438;
+    /* Morado oscuro base */
+    --bs-primary-rgb: 45, 36, 56;
+}
+
+/* Sobrescribir botones */
+.btn-primary {
+    background-color: var(--bs-primary) !important;
+    border-color: var(--bs-primary) !important;
+    color: white !important;
+}
+
+.btn-primary:hover {
+    background-color: #423552 !important;
+    /* Un tono sutilmente más CLARO para el hover (ya que la base es muy oscura) */
+    border-color: #423552 !important;
+}
+
+.btn-outline-primary {
+    color: var(--bs-primary) !important;
+    border-color: var(--bs-primary) !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--bs-primary) !important;
+    color: white !important;
+}
+
+/* Sobrescribir el botón transparente del banner (outline-light) */
+.btn-outline-light {
+    color: #ffffff !important;
+    /* Fuerza el texto a blanco siempre, ignorando enlaces visitados */
+    border-color: #ffffff !important;
+}
+
+.btn-outline-light:hover {
+    background-color: #ffffff !important;
+    color: var(--bs-primary) !important;
+    /* Al hacer hover, el fondo es blanco y el texto se vuelve morado oscuro */
+}
+
+/* Sobrescribir fondos, bordes y textos */
+.bg-primary {
+    background-color: var(--bs-primary) !important;
+}
+
+.text-primary {
+    color: var(--bs-primary) !important;
+}
+
+.border-primary {
+    border-color: var(--bs-primary) !important;
+}
+
+/* PARA CALIFICACIÓN (FEEDBACK) */
+.rating-stars {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: center;
+}
+
+.rating-stars input {
+    display: none;
+}
+
+.rating-stars label {
+    cursor: pointer;
+    font-size: 2.5rem;
+    color: #ddd;
+    padding: 0 5px;
+    transition: color 0.2s;
+}
+
+.rating-stars input:checked~label,
+.rating-stars label:hover,
+.rating-stars label:hover~label {
+    color: #ffc107;
+}
+
+.star-filled {
+    color: #ffc107;
+}
+
+.star-empty {
+    color: #ddd;
+}
+
+/* PARA LÍNEA DE TIEMPO (HISTORIAL MÉDICO) */
+.timeline {
+    border-left: 3px solid var(--bs-primary);
+    /* Ahora es morado oscuro */
+    padding-left: 20px;
+    margin-left: 10px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    background: var(--bs-primary);
+    border-radius: 50%;
+    left: -29px;
+    top: 5px;
+}
+
+/* INDEX */
+.hero-section {
+    /* Degradado morado oscuro hacia un tono casi negro */
+    background: linear-gradient(135deg, #2d2438 0%, #15111a 100%);
+    color: white;
+    padding: 50px 0;
+}
+
+.service-card {
+    transition: transform 0.3s shadow 0.3s;
+}
+
+.service-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* FOOTER */
+.footer-custom {
+    background-color: #2d2438;
+    /* La línea ahora es dorada para generar contraste con el fondo oscuro */
+    border-top: 4px solid #ffc107;
+}
+
+.footer-custom p.small {
+    color: #bfa8d9 !important;
+}
+
+/* Para Intranet Veterinaria */
+.bg-dark-purple {
+    background-color: #2d2438 !important;
+    color: white !important;
+}
+
+/* EFECTO HOVER PARA EL MENÚ (NAVBAR) */
+.navbar-nav .nav-link {
+    position: relative;
+    padding-bottom: 5px;
+}
+
+/* Línea (inicialmente invisible con scaleX en 0) */
+.navbar-nav .nav-link::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 3px;
+    bottom: 5px;
+    /* Altura de la línea respecto al borde inferior */
+    left: 0;
+    background-color: #ffc107;
+    /* Color dorado de contraste */
+    transform: scaleX(0);
+    transform-origin: bottom right;
+    transition: transform 0.3s ease-out;
+}
+
+/* Al hacer hover, la línea se expande a tamaño completo (scaleX en 1) */
+.navbar-nav .nav-link:hover::after {
+    transform: scaleX(1);
+    transform-origin: bottom left;
+}
+
+/* Texto blanco al hacer hover */
+.navbar-nav .nav-link:hover {
+    color: #ffffff !important;
+}
+
+/* Color del nombre del paciente en consulta */
+.nombre-mascota-highlight {
+    color: rgba(128, 162, 8, 0.86) !important;
+}
