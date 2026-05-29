@@ -5,6 +5,7 @@ urlpatterns = [
     # APIs
     path('api/servicios/', views.obtener_servicios_por_sucursal, name='api_servicios_por_sucursal'),
     path('api/profesionales/', views.obtener_profesionales_por_servicio, name='api_profesionales_por_servicio'),
+    path('api/validar-profesional/', views.api_validar_datos_profesional, name='api_validar_profesional'),
     
     # Público
     path('', views.index, name='index'),

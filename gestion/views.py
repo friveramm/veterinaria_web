@@ -302,7 +302,7 @@ def historial_clinico(request, mascota_id):
     Genera la línea de tiempo clínica de un paciente específico, extrayendo
     todas las atenciones médicas previas ordenadas cronológicamente de más reciente a más antigua.
     """
-    # 1. Traer la mascota con sus datos de dueño y enfermedades crónicas
+    # 1. Traer la mascota con sus datos de dueño y enfermedades
     mascota = get_object_or_404(
         Mascota.objects.select_related('dueno').prefetch_related('enfermedades'), 
         id_mascota=mascota_id
@@ -495,12 +495,24 @@ def administrar_profesional(request, profesional_id=None):
             # Seguridad para backend: Validar que el RUT ingresado sea matemáticamente correcto antes de guardar
             if not validar_rut_chileno(rut):
                 messages.error(request, "Error de validación: El RUT ingresado no es matemáticamente válido (Dígito verificador incorrecto).")
-                # Si el RUT es inválido, abortamos la creación y recargamos la página
+                # Si el RUT es inválido, se cancela la creación y recargamos la página
                 if profesional:
                     return redirect('administrar_profesional', profesional_id=profesional.id_profesional)
                 return redirect('crear_profesional')
 
-            nombre = request.POST.get('nombre')
+            # Get a los 4 campos del nombre
+            p_nombre = request.POST.get('primer_nombre', '').strip()
+            s_nombre = request.POST.get('segundo_nombre', '').strip()
+            p_apellido = request.POST.get('primer_apellido', '').strip()
+            s_apellido = request.POST.get('segundo_apellido', '').strip()
+
+            # Formatear para auth_user (first_name y last_name)
+            first_name = f"{p_nombre} {s_nombre}".strip()
+            last_name = f"{p_apellido} {s_apellido}".strip()
+            
+            # Formatear para tabla Profesional (nombre_completo)
+            nombre_completo = f"{first_name} {last_name}".strip()
+
             cargo_id = request.POST.get('cargo')
             sucursal_id = request.POST.get('sucursal')
             servicios_ids = request.POST.getlist('servicios')
@@ -508,23 +520,42 @@ def administrar_profesional(request, profesional_id=None):
             try:
                 with transaction.atomic():
                     if profesional:
+                        # 1. Actualizar tabla Profesional
                         profesional.rut = rut
-                        profesional.nombre = nombre
+                        profesional.nombre = nombre_completo
                         profesional.cargo_id = cargo_id
                         profesional.sucursal_id = sucursal_id
                         profesional.save()
+
+                        # 2. Actualizar también la tabla auth_user
+                        profesional.user.first_name = first_name
+                        profesional.user.last_name = last_name
+                        profesional.user.save()
+
                         messages.success(request, f"Datos de {profesional.nombre} actualizados.")
                     else:
                         username = request.POST.get('username')
                         password = request.POST.get('password')
                         email = request.POST.get('email')
                         
-                        user = User.objects.create_user(username=username, password=password, email=email)
-                        
-                        profesional = Profesional.objects.create(
-                            user=user, rut=rut, nombre=nombre, cargo_id=cargo_id, sucursal_id=sucursal_id
+                        # Crear el usuario en auth_user inyectando los nombres inmediatamente
+                        user = User.objects.create_user(
+                            username=username, 
+                            password=password, 
+                            email=email,
+                            first_name=first_name,
+                            last_name=last_name
                         )
-                        messages.success(request, f"Profesional {nombre} incorporado al staff con éxito.")
+                        
+                        # Crear la ficha del Profesional
+                        profesional = Profesional.objects.create(
+                            user=user, 
+                            rut=rut, 
+                            nombre=nombre_completo, 
+                            cargo_id=cargo_id, 
+                            sucursal_id=sucursal_id
+                        )
+                        messages.success(request, f"Profesional {nombre_completo} incorporado al staff con éxito.")
 
                     profesional.servicios.set(servicios_ids)
                     
@@ -580,7 +611,7 @@ def administrar_profesional(request, profesional_id=None):
                     profesional.user.is_active = False
                     profesional.user.save()
                     
-                    # 2. Borramos todos sus turnos para que desaparezca de la agenda pública
+                    # 2. Borrar todos sus turnos para que desaparezca de la agenda pública
                     HorarioLaboral.objects.filter(profesional=profesional).delete()
                     
                     messages.success(request, f"El profesional {profesional.nombre} ha sido desvinculado. Su acceso fue revocado y su agenda eliminada, pero su historial médico se mantiene intacto por razones legales.")
@@ -695,3 +726,42 @@ def redireccionar_por_rol(request):
     # 4. Si es usuario común
     else:
         return redirect('index')
+    
+@login_required
+@jefe_required
+def api_validar_datos_profesional(request):
+    """
+    Endpoint AJAX para validar en tiempo real si el username o el RUT 
+    ya existen antes de enviar el formulario.
+    """
+    username = request.GET.get('username', '').strip()
+    rut = request.GET.get('rut', '').strip()
+    exclude_id = request.GET.get('exclude_id', '').strip()
+
+    data = {
+        'username_usado': False,
+        'rut_usado': False,
+        'rut_dueno': ''
+    }
+
+    # 1. Validar Username
+    if username:
+        if User.objects.filter(username__iexact=username).exists():
+            data['username_usado'] = True
+
+    # 2. Validar RUT
+    if rut:
+        # Limpiar el RUT usando el mismo estándar del modelo
+        rut_limpio = rut.replace(".", "").replace("-", "").strip().upper()
+        query = Profesional.objects.filter(rut=rut_limpio)
+        
+        # Si está editando a un profesional, se excluye su propio ID para que no salte error con su propio RUT
+        if exclude_id:
+            query = query.exclude(id_profesional=exclude_id)
+        
+        prof_existente = query.first()
+        if prof_existente:
+            data['rut_usado'] = True
+            data['rut_dueno'] = prof_existente.nombre
+
+    return JsonResponse(data)

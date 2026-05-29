@@ -42,7 +42,9 @@
                         <h5 class="mb-0 fw-bold">Datos del Profesional</h5>
                     </div>
                     <div class="card-body p-4 bg-light">
-                        <form method="POST" id="form-maestro" class="bg-white p-4 rounded shadow-sm border">
+                        <form method="POST" id="form-maestro" class="bg-white p-4 rounded shadow-sm border" 
+                                data-url-validacion="{% url 'api_validar_profesional' %}" 
+                                data-prof-id="{{ profesional.id_profesional|default:'' }}">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="guardar_profesional">
 
@@ -51,6 +53,7 @@
                                     <div class="col-6">
                                         <label class="form-label text-muted small fw-bold">Usuario</label>
                                         <input type="text" id="input-username" name="username" class="form-control border-primary" required>
+                                        <small id="username-feedback" class="text-danger d-none fw-bold mt-1">Este usuario ya existe.</small>
                                     </div>
                                     <div class="col-6">
                                         <label class="form-label text-muted small fw-bold">Contraseña</label>
@@ -70,9 +73,24 @@
                                 <small id="rut-feedback" class="text-danger d-none fw-bold">RUT inválido.</small>
                             </div>
                             
-                            <div class="mb-3">
-                                <label class="form-label text-muted small fw-bold">Nombre Completo</label>
-                                <input type="text" name="nombre" value="{{ profesional.nombre|default:'' }}" class="form-control border-primary" required>
+                            <div class="row g-3 mb-3">
+                                <div class="col-sm-6">
+                                    <label class="form-label text-muted small fw-bold">Primer Nombre <span class="text-danger">*</span></label>
+                                    <input type="text" name="primer_nombre" maxlength="24" value="{{ profesional.user.first_name|default:'' }}" class="form-control border-primary" required>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form-label text-muted small fw-bold">Segundo Nombre</label>
+                                    <input type="text" name="segundo_nombre" maxlength="24" class="form-control border-primary" placeholder="Opcional">
+                                </div>
+                                
+                                <div class="col-sm-6">
+                                    <label class="form-label text-muted small fw-bold">Primer Apellido <span class="text-danger">*</span></label>
+                                    <input type="text" name="primer_apellido" maxlength="24" value="{{ profesional.user.last_name|default:'' }}" class="form-control border-primary" required>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form-label text-muted small fw-bold">Segundo Apellido</label>
+                                    <input type="text" name="segundo_apellido" maxlength="24" class="form-control border-primary" placeholder="Opcional">
+                                </div>
                             </div>
                             
                             <div class="mb-3">
