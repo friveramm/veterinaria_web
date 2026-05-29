@@ -263,18 +263,32 @@ def atender_cita(request, cita_id):
 def buscador_pacientes(request):
     """
     Motor de búsqueda de pacientes para la intranet médica.
-    Permite buscar por nombre de mascota o RUT del dueño usando objetos Q.
+    Devuelve HTML normal, o un JSON si la petición es asíncrona (AJAX).
     """
     query = request.GET.get('q', '').strip()
     resultados = []
 
     if query:
-        # Consulta BD: Busca coincidencias ignorando mayúsculas/minúsculas (icontains)
-        # en el nombre de la mascota OR (|) en el RUT de su dueño relacional.
         resultados = Mascota.objects.filter(
             Q(nombre__icontains=query) | Q(dueno__rut__icontains=query)
         ).select_related('dueno')
 
+    # Si la petición viene del JavaScript (AJAX)
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        data = [
+            {
+                'id_mascota': m.id_mascota,
+                'nombre': m.nombre,
+                'especie': m.especie,
+                'edad': m.edad,
+                'dueno_nombre': m.dueno.nombre,
+                'dueno_rut': m.dueno.rut
+            }
+            for m in resultados
+        ]
+        return JsonResponse({'resultados': data, 'query': query})
+
+    # Si es una petición normal del navegador, procesa el HTML
     context = {
         'query': query,
         'resultados': resultados
@@ -309,9 +323,10 @@ def historial_clinico(request, mascota_id):
 
 # Decorador de seguridad para la Jefatura
 def jefe_required(view_func):
-    """ Restringe el acceso únicamente a administradores o staff """
+    """ Restringe el acceso únicamente a gerencia """
     def _wrapped_view(request, *args, **kwargs):
-        if request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser):
+        # Solo pasa si es is_superuser
+        if request.user.is_authenticated and request.user.is_superuser:
             return view_func(request, *args, **kwargs)
         raise PermissionDenied
     return _wrapped_view
@@ -504,7 +519,7 @@ def administrar_profesional(request, profesional_id=None):
                         password = request.POST.get('password')
                         email = request.POST.get('email')
                         
-                        user = User.objects.create_user(username=username, password=password, email=email, is_staff=True)
+                        user = User.objects.create_user(username=username, password=password, email=email)
                         
                         profesional = Profesional.objects.create(
                             user=user, rut=rut, nombre=nombre, cargo_id=cargo_id, sucursal_id=sucursal_id

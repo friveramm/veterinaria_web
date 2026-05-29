@@ -1,0 +1,59 @@
+/* PARA CALIFICACIÓN (FEEDBACK) */
+/* Estilos para las estrellas interactivas del Modal */
+.rating-stars {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: center;
+}
+
+.rating-stars input {
+    display: none;
+    /* Ocultar el botón de radio circular nativo */
+}
+
+.rating-stars label {
+    cursor: pointer;
+    font-size: 2.5rem;
+    color: #ddd;
+    padding: 0 5px;
+    transition: color 0.2s;
+}
+
+/* Efecto hover y selección (ilumina la actual y las anteriores) */
+.rating-stars input:checked~label,
+.rating-stars label:hover,
+.rating-stars label:hover~label {
+    color: #ffc107;
+}
+
+/* Estilos para las estrellas fijas de las citas ya evaluadas */
+.star-filled {
+    color: #ffc107;
+}
+
+.star-empty {
+    color: #ddd;
+}
+
+/* PARA LÍNEA DE TIEMPO (HISTORIAL MÉDICO) */
+.timeline {
+    border-left: 3px solid #0d6efd;
+    padding-left: 20px;
+    margin-left: 10px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    background: #0d6efd;
+    border-radius: 50%;
+    left: -29px;
+    top: 5px;
+}

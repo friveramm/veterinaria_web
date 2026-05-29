@@ -1,12 +1,9 @@
+{% extends 'gestion/base_staff.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Atendiendo a {{ cita.mascota.nombre }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
+
+{% block title %}Consulta: {{ cita.mascota.nombre }}{% endblock %}
+
+{% block content %}
     <div class="container my-5">
         
         {% if messages %}
@@ -108,7 +105,7 @@
                                             <span><strong>{{ enf.descripcion }}</strong></span>
                                             
                                             {% if puede_editar or not entrada %}
-                                                <form method="POST" style="display:inline;" onsubmit="return confirm('⚠️ RETIRAR DIAGNÓSTICO: ¿Confirmas que deseas quitar la enfermedad \u0027{{ enf.descripcion }}\u0027 del expediente del paciente? Esto alterará sus antecedentes.');">
+                                                <form method="POST" style="display:inline;" onsubmit="return confirm('RETIRAR DIAGNÓSTICO: ¿Confirmas que deseas quitar la enfermedad \u0027{{ enf.descripcion }}\u0027 del expediente del paciente? Esto alterará sus antecedentes.');">
                                                     {% csrf_token %}
                                                     <input type="hidden" name="action" value="quitar_enfermedad">
                                                     <input type="hidden" name="enfermedad_id" value="{{ enf.id_enfermedad }}">
@@ -150,7 +147,7 @@
                             </form>
                         {% else %}
                             <div class="alert alert-light text-muted border py-3 text-center">
-                                🔒 Historial de diagnósticos cerrado.<br>Para agregar nuevas patologías debe agendar una nueva interconsulta.
+                                Historial de diagnósticos cerrado.<br>Para agregar nuevas patologías debe agendar una nueva interconsulta.
                             </div>
                         {% endif %}
                     </div>
@@ -159,8 +156,9 @@
         </div>
 
     </div>
+{% endblock %}
 
+{% block extra_js %}
     <script src="{% static 'gestion/js/atencion.js' %}"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+{% endblock %}
