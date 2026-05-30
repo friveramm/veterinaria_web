@@ -164,9 +164,8 @@
             "nombre": "Luna",
             "dueno": "d1a2b3c4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
             "n_chip": "985112000345671",
-            "edad": 3,
             "fec_nac": "2023-03-15",
-            "especie": "Perro",
+            "especie": "Canino",
             "enfermedades": [
                 2
             ]

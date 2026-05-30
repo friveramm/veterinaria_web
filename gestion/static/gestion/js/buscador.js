@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             html += `
                             <tr>
                                 <td><strong>${m.nombre}</strong></td>
-                                <td>${m.especie} (${m.edad} años)</td>
+                                <td>${m.especie} (${m.edad})</td>
                                 <td>${m.dueno_nombre}</td>
                                 <td><span class="badge bg-secondary">${m.dueno_rut}</span></td>
                                 <td class="text-center">

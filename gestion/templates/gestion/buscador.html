@@ -42,7 +42,7 @@
                                 {% for mascota in resultados %}
                                     <tr>
                                         <td><strong>{{ mascota.nombre }}</strong></td>
-                                        <td>{{ mascota.especie }} ({{ mascota.edad }} años)</td>
+                                        <td>{{ mascota.especie }} ({{ mascota.edad_calculada }})</td>
                                         <td>{{ mascota.dueno.nombre }}</td>
                                         <td><span class="badge bg-secondary">{{ mascota.dueno.rut }}</span></td>
                                         <td class="text-center">
