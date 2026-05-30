@@ -1,11 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.db import transaction
+from django.db import transaction, connection # Interactuar con las secuencias de Postgres
 from django.db.models import Q, ProtectedError, Sum, Count, Avg # Para consultas complejas
 from django.contrib import messages
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.http import JsonResponse
 from django.utils import timezone
-from .models import Profesional, Servicio, Sucursal, Mascota, Cita, DetalleCita, EntradaCita, Enfermedad, Cargo, HorarioLaboral, Feedback, Dueno
+from .models import Ficha, Profesional, Servicio, Sucursal, Mascota, Cita, DetalleCita, EntradaCita, Enfermedad, Cargo, HorarioLaboral, Feedback, Dueno
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from datetime import datetime, date
@@ -280,7 +280,7 @@ def buscador_pacientes(request):
                 'id_mascota': m.id_mascota,
                 'nombre': m.nombre,
                 'especie': m.especie,
-                'edad': m.edad,
+                'edad': m.edad_calculada,
                 'dueno_nombre': m.dueno.nombre,
                 'dueno_rut': m.dueno.rut
             }
@@ -909,3 +909,96 @@ def api_validar_datos_cliente(request):
             data['rut_usado'] = True
 
     return JsonResponse(data)
+
+def obtener_siguiente_n_ficha():
+    """
+    Consulta de forma atómica el siguiente número correlativo disponible
+    en la secuencia nativa de PostgreSQL.
+    """
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT nextval('gestion_ficha_n_ficha_seq')")
+        return cursor.fetchone()[0]
+
+@login_required
+@dueno_required
+def agregar_mascota_cliente(request):
+    """
+    Portal Cliente: Permite al dueño registrar una nueva mascota.
+    """
+    dueno = request.user.perfil_dueno
+
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre').strip()
+        especie = request.POST.get('especie').strip()
+        fec_nac = request.POST.get('fec_nac')
+        n_chip = request.POST.get('n_chip', '').strip() or None
+
+        try:
+            with transaction.atomic():
+                # 1. Crear la Mascota en la BD
+                mascota = Mascota.objects.create(
+                    nombre=nombre,
+                    dueno=dueno,
+                    especie=especie,
+                    fec_nac=fec_nac,
+                    n_chip=n_chip
+                )
+                
+                # 2. Generar su Ficha con un número correlativo seguro y atómico
+                nuevo_n_ficha = obtener_siguiente_n_ficha()
+                
+                Ficha.objects.create(n_ficha=nuevo_n_ficha, mascota=mascota)
+                
+            messages.success(request, f"¡{nombre} ha sido registrado/a con éxito! Su Ficha Clínica es la N° {nuevo_n_ficha}.")
+            return redirect('historial_cliente')
+
+        except Exception as e:
+            messages.error(request, f"Error crítico al registrar mascota: {str(e)}")
+
+    return render(request, 'gestion/agregar_mascota_cliente.html')
+
+
+@login_required
+@veterinario_required
+def agregar_mascota_veterinario(request):
+    """
+    Intranet Médica: Permite al profesional registrar un paciente nuevo.
+    Requiere validar el RUT del dueño primero.
+    """
+    if request.method == 'POST':
+        rut_bruto = request.POST.get('rut_dueno', '')
+        rut_limpio = str(rut_bruto).replace(".", "").replace("-", "").strip().upper()
+        
+        try:
+            # Buscar al dueño por RUT
+            dueno = Dueno.objects.get(rut=rut_limpio)
+        except Dueno.DoesNotExist:
+            messages.error(request, "El RUT ingresado no corresponde a ningún cliente registrado en el sistema. El dueño debe crear su cuenta primero.")
+            return redirect('agregar_mascota_vet')
+
+        nombre = request.POST.get('nombre').strip()
+        especie = request.POST.get('especie').strip()
+        fec_nac = request.POST.get('fec_nac')
+        n_chip = request.POST.get('n_chip', '').strip() or None
+
+        try:
+            with transaction.atomic():
+                mascota = Mascota.objects.create(
+                    nombre=nombre,
+                    dueno=dueno,
+                    especie=especie,
+                    fec_nac=fec_nac,
+                    n_chip=n_chip
+                )
+                
+                # 2. Generar su Ficha con un número correlativo seguro y atómico
+                nuevo_n_ficha = obtener_siguiente_n_ficha()
+                Ficha.objects.create(n_ficha=nuevo_n_ficha, mascota=mascota)
+                
+            messages.success(request, f"Paciente {nombre} agregado con éxito a la cuenta de {dueno.nombre}.")
+            return redirect('buscador_pacientes') # Redirige al buscador médico
+
+        except Exception as e:
+            messages.error(request, f"Error del sistema: {str(e)}")
+
+    return render(request, 'gestion/agregar_mascota_vet.html')

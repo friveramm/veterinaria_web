@@ -1,0 +1,68 @@
+{% extends 'gestion/base_staff.html' %} {% load static %}
+
+{% block title %}Ingreso Médico de Paciente{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            
+            {% if messages %}
+                {% for m in messages %}
+                    <div class="alert {% if m.tags == 'success' %}alert-success{% else %}alert-danger{% endif %} shadow-sm">{{ m }}</div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="card shadow border-0 bg-white">
+                <div class="card-header bg-dark-purple text-white p-4">
+                    <h4 class="mb-0 fw-bold">Ficha de Ingreso Médico</h4>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="bg-light p-3 border border-primary rounded mb-4">
+                            <label class="form-label text-primary small fw-bold">RUT del Dueño (Cliente Registrado) <span class="text-danger">*</span></label>
+                            <input type="text" name="rut_dueno" id="input-rut" class="form-control border-primary" required placeholder="Ej: 12.345.678-K">
+                            <small class="text-muted d-block mt-1">El cliente debe existir en nuestra base de datos para asociar la ficha.</small>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-bold">Nombre del Paciente <span class="text-danger">*</span></label>
+                                <input type="text" name="nombre" class="form-control border-primary" required maxlength="50">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-bold">Especie <span class="text-danger">*</span></label>
+                                <select name="especie" class="form-select border-primary" required>
+                                    <option value="" disabled selected>Selecciona...</option>
+                                    <option value="Canino">Perro (Canino)</option>
+                                    <option value="Felino">Gato (Felino)</option>
+                                    <option value="Exótico">Exótico / Otros</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold">Fecha de Nacimiento <span class="text-danger">*</span></label>
+                            <input type="date" name="fec_nac" class="form-control border-primary" required>
+                            <small class="text-muted d-block mt-1">El sistema calculará automáticamente la edad exacta (años y meses) para su historial clínico.</small>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label text-muted small fw-bold">Número de Microchip</label>
+                            <input type="text" name="n_chip" class="form-control border-primary" placeholder="Dejar en blanco si no aplica" maxlength="30">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 fw-bold shadow-sm py-2 mt-2">Crear Ficha Médica</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'gestion/js/validar_rut.js' %}"></script>
+{% endblock %}

@@ -25,6 +25,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'buscador_pacientes' %}">Buscador de Pacientes</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'agregar_mascota_vet' %}">Crear un Nuevo Paciente</a>
+                    </li>
                     
                     {% if request.user.is_superuser %}
                     <li class="nav-item border-start ms-2 ps-2">

@@ -1,0 +1,62 @@
+{% extends 'gestion/base_clientes.html' %}
+
+{% block title %}Registrar Nueva Mascota{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            
+            {% if messages %}
+                {% for m in messages %}
+                    <div class="alert {% if m.tags == 'success' %}alert-success{% else %}alert-danger{% endif %} shadow-sm">{{ m }}</div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="card shadow border-0 bg-white">
+                <div class="card-header bg-dark-purple text-white p-4">
+                    <h4 class="mb-0 fw-bold">Registrar a mi Mascota</h4>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-bold">Nombre del Paciente <span class="text-danger">*</span></label>
+                                <input type="text" name="nombre" class="form-control border-primary" required maxlength="50">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-bold">Especie <span class="text-danger">*</span></label>
+                                <select name="especie" class="form-select border-primary" required>
+                                    <option value="" disabled selected>Selecciona...</option>
+                                    <option value="Canino">Perro (Canino)</option>
+                                    <option value="Felino">Gato (Felino)</option>
+                                    <option value="Exótico">Exótico / Otros</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold">Fecha de Nacimiento <span class="text-danger">*</span></label>
+                            <input type="date" name="fec_nac" class="form-control border-primary" required>
+                            <small class="text-muted d-block mt-1">El sistema calculará automáticamente la edad exacta (años y meses) para su historial clínico.</small>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label text-muted small fw-bold">Número de Microchip (Opcional)</label>
+                            <input type="text" name="n_chip" class="form-control border-primary" placeholder="Ej: 981020000000000" maxlength="30">
+                            <small class="text-muted">Déjalo en blanco si tu mascota no cuenta con uno.</small>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'historial_cliente' %}" class="btn btn-outline-secondary fw-bold shadow-sm">Cancelar</a>
+                            <button type="submit" class="btn btn-primary fw-bold shadow-sm px-4">Guardar Registro</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

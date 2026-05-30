@@ -22,13 +22,16 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'pagina_agendar' %}">Agendar Cita</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'historial_cliente' %}">Mis Atenciones</a>
-                    </li>
 
                     {% if request.user.is_authenticated and request.user.perfil_dueno %}
                     <li class="nav-item">
+                        <a class="nav-link" href="{% url 'historial_cliente' %}">Mis Atenciones</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="{% url 'proximas_citas' %}">Próximas Citas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'agregar_mascota_cliente' %}">Agregar Mascota</a>
                     </li>
                     {% endif %}
 
