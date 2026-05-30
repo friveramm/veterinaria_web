@@ -98,14 +98,36 @@ class Mascota(models.Model):
     nombre = models.CharField(max_length=50)
     dueno = models.ForeignKey(Dueno, on_delete=models.CASCADE, related_name="mascotas")
     n_chip = models.CharField(max_length=30, blank=True, null=True, unique=True)
-    edad = models.IntegerField()
     fec_nac = models.DateField()
     especie = models.CharField(max_length=50)
-    # Una mascota puede tener varias enfermedades
+    # Una mascota puede tener varias enfermedades y una enfermedad puede afectar a varias mascotas (relación muchos a muchos)
     enfermedades = models.ManyToManyField(Enfermedad, related_name="mascotas", blank=True)
 
     def __str__(self):
         return f"{self.nombre} ({self.especie})"
+
+    # Cálculo dinámico de la edad
+    @property
+    def edad_calculada(self):
+        if not self.fec_nac:
+            return "Desconocida"
+            
+        hoy = datetime.date.today()
+        # Cálculo exacto considerando bisiestos y días del mes
+        anios = hoy.year - self.fec_nac.year - ((hoy.month, hoy.day) < (self.fec_nac.month, self.fec_nac.day))
+        meses = hoy.month - self.fec_nac.month - ((hoy.day) < (self.fec_nac.day))
+        
+        if meses < 0:
+            meses += 12
+            
+        if anios == 0:
+            if meses == 0:
+                return "Menos de 1 mes"
+            return f"{meses} mes{'es' if meses != 1 else ''}"
+        elif anios > 0 and meses == 0:
+            return f"{anios} año{'s' if anios != 1 else ''}"
+        else:
+            return f"{anios} año{'s' if anios != 1 else ''}, {meses} mes{'es' if meses != 1 else ''}"
 
 class Ficha(models.Model):
     id_ficha = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
