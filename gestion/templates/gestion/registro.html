@@ -1,0 +1,121 @@
+{% extends 'gestion/base_clientes.html' %}
+{% load static %}
+
+{% block title %}Crear Cuenta - Mi Veterinaria{% endblock %}
+
+{% block content %}
+    <div class="container my-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-xl-7">
+                
+                {% if messages %}
+                    {% for m in messages %}
+                        <div class="alert {% if m.tags == 'success' %}alert-success{% else %}alert-danger{% endif %} shadow-sm">{{ m }}</div>
+                    {% endfor %}
+                {% endif %}
+
+                <div class="card shadow border-0 bg-white overflow-hidden">
+                    <div class="card-header bg-dark-purple text-white p-4 text-center">
+                        <h3 class="mb-0 fw-bold">Registro de Clientes</h3>
+                        <p class="mb-0 text-white-50 mt-1 small">Únete a nuestro portal y gestiona la salud de tus mascotas fácilmente.</p>
+                    </div>
+                    
+                <div class="card-body p-4 p-md-5 bg-light">
+                    
+                    {% if registro_exitoso %}
+                        <div class="text-center py-4 slide-in-fwd">
+                            <h2 class="fw-bold text-dark mb-3">¡Cuenta creada con éxito!</h2>
+                            <p class="text-muted fs-5 mb-5">Bienvenido/a <strong class="text-primary">{{ nombre_usuario }}</strong>. Tu registro se ha guardado correctamente.</p>
+                            
+                            <div class="bg-white p-4 rounded shadow-sm border border-primary mb-4 d-inline-block">
+                                <p class="mb-2 text-muted fw-bold text-uppercase small">Redirigiendo al inicio de sesión en</p>
+                                <div class="display-3 fw-bold text-primary" id="contador">10</div>
+                                <p class="text-muted small mt-1 mb-0">segundos...</p>
+                            </div>
+                            
+                            <div>
+                                <a href="{% url 'login' %}" class="btn btn-outline-primary fw-bold rounded-pill px-4 shadow-sm">Saltar espera e ir ahora</a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <form method="POST" id="form-registro" class="bg-white p-4 rounded shadow-sm border"
+                            data-url-validacion="{% url 'api_validar_cliente' %}">
+                            {% csrf_token %}
+                            
+                            <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Credenciales de Acceso</h6>
+                            
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted small fw-bold">Nombre de Usuario <span class="text-danger">*</span></label>
+                                    <input type="text" id="input-username" name="username" class="form-control border-primary" required maxlength="30">
+                                    <small id="username-feedback" class="text-danger d-none fw-bold mt-1">Este usuario ya existe.</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted small fw-bold">Contraseña <span class="text-danger">*</span></label>
+                                    <input type="password" name="password" class="form-control border-primary" required minlength="6">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="form-label text-muted small fw-bold">Correo Electrónico <span class="text-danger">*</span></label>
+                                <input type="email" id="input-email" name="email" class="form-control border-primary" required placeholder="ejemplo@correo.com" maxlength="50">
+                                <small id="email-feedback" class="text-danger d-none fw-bold mt-1">Ingresa un correo válido.</small>
+                            </div>
+
+                            <h6 class="text-primary fw-bold mb-3 border-bottom pb-2 mt-5">Datos Personales</h6>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted small fw-bold">RUT <span class="text-danger">*</span></label>
+                                    <input type="text" id="input-rut" name="rut" class="form-control border-primary" required placeholder="Ej: 12.345.678-K" maxlength="12">
+                                    <small id="rut-feedback" class="text-danger d-none fw-bold mt-1">RUT inválido.</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted small fw-bold">Teléfono Móvil <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light fw-bold text-muted border-primary">+56 9</span>
+                                        <input type="text" id="input-fono-visible" class="form-control border-primary" required placeholder="12345678" maxlength="8">
+                                        <input type="hidden" id="input-fono-oculto" name="fono">
+                                    </div>
+                                    <small id="fono-feedback" class="text-danger d-none fw-bold mt-1">Ingresa exactamente 8 dígitos.</small>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted small fw-bold">Primer Nombre <span class="text-danger">*</span></label>
+                                    <input type="text" name="primer_nombre" maxlength="24" class="form-control border-primary" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted small fw-bold">Segundo Nombre</label>
+                                    <input type="text" name="segundo_nombre" maxlength="24" class="form-control border-primary" placeholder="Opcional">
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted small fw-bold">Primer Apellido <span class="text-danger">*</span></label>
+                                    <input type="text" name="primer_apellido" maxlength="24" class="form-control border-primary" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted small fw-bold">Segundo Apellido</label>
+                                    <input type="text" name="segundo_apellido" maxlength="24" class="form-control border-primary" placeholder="Opcional">
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label text-muted small fw-bold">Dirección de Residencia <span class="text-danger">*</span></label>
+                                <input type="text" name="direccion" class="form-control border-primary" required placeholder="Calle, Número, Comuna..." maxlength="100">
+                            </div>
+
+                            <button type="submit" id="btn-registrar" class="btn btn-primary w-100 fw-bold shadow-sm py-2 mt-3">Crear Mi Cuenta</button>
+                        </form>
+                    {% endif %} </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'gestion/js/validar_rut.js' %}"></script>
+    <script src="{% static 'gestion/js/registro_cliente.js' %}"></script>
+{% endblock %}

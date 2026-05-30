@@ -25,13 +25,25 @@
                                 <label class="form-label text-muted small fw-bold">Nombre de Usuario</label>
                                 <input type="text" name="username" class="form-control bg-light" required>
                             </div>
+                            
                             <div class="mb-4">
-                                <label class="form-label text-muted small fw-bold">Contraseña</label>
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label text-muted small fw-bold mb-0">Contraseña</label>
+                                    <a href="#" class="small text-decoration-none fw-bold text-primary">¿Olvidaste tu contraseña?</a>
+                                </div>
                                 <input type="password" name="password" class="form-control bg-light" required>
                             </div>
+                            
                             <button type="submit" class="btn btn-primary w-100 fw-bold py-2 shadow-sm">Iniciar Sesión</button>
                         </form>
 
+                        <div class="mt-4 text-center border-top pt-3">
+                            <p class="text-muted small mb-2">¿Aún no eres parte de la clínica?</p>
+                            <a href="{% url 'registro_cliente' %}" class="btn btn-outline-primary w-100 fw-bold shadow-sm">
+                                Regístrate Aquí
+                            </a>
+                        </div>
+                        
                     </div>
                 </div>
             </div>

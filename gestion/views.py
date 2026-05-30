@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.http import JsonResponse
 from django.utils import timezone
-from .models import Profesional, Servicio, Sucursal, Mascota, Cita, DetalleCita, EntradaCita, Enfermedad, Cargo, HorarioLaboral, Feedback
+from .models import Profesional, Servicio, Sucursal, Mascota, Cita, DetalleCita, EntradaCita, Enfermedad, Cargo, HorarioLaboral, Feedback, Dueno
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from datetime import datetime, date
@@ -792,3 +792,120 @@ def proximas_citas(request):
         'hoy': hoy
     }
     return render(request, 'gestion/proximas_citas.html', context)
+
+def registro_cliente(request):
+    """
+    Portal Público: Permite a un nuevo cliente crear su cuenta.
+    Poblar las tablas auth_user y Dueno simultáneamente.
+    """
+    # Si ya está logueado, mandar a su panel
+    if request.user.is_authenticated:
+        return redirect('redireccionar_por_rol')
+
+    if request.method == 'POST':
+        rut = request.POST.get('rut')
+        
+        # Validación matemática del RUT
+        if not validar_rut_chileno(rut):
+            messages.error(request, "El RUT ingresado no es válido.")
+            return redirect('registro_cliente')
+
+        username = request.POST.get('username').strip()
+        email = request.POST.get('email').strip()
+        password = request.POST.get('password')
+        direccion = request.POST.get('direccion').strip()
+        fono = request.POST.get('fono').strip()
+
+        # Atrapar los 4 campos del nombre
+        p_nombre = request.POST.get('primer_nombre', '').strip()
+        s_nombre = request.POST.get('segundo_nombre', '').strip()
+        p_apellido = request.POST.get('primer_apellido', '').strip()
+        s_apellido = request.POST.get('segundo_apellido', '').strip()
+
+        # Validación de seguridad: El primer nombre y el primer apellido son obligatorios 
+        # para evitar registros con datos insuficientes
+        if not p_nombre or not p_apellido:
+            messages.error(request, "Error de seguridad: El primer nombre y el primer apellido son obligatorios.")
+            return redirect('registro_cliente')
+
+        # Formatear nombres
+        first_name = f"{p_nombre} {s_nombre}".strip()
+        last_name = f"{p_apellido} {s_apellido}".strip()
+        nombre_completo = f"{first_name} {last_name}".strip()
+
+        try:
+            with transaction.atomic():
+                # 1. Validaciones de existencia (Usuario y Correo)
+                if User.objects.filter(username__iexact=username).exists():
+                    messages.error(request, "El nombre de usuario ya está en uso. Elige otro.")
+                    return redirect('registro_cliente')
+                
+                if User.objects.filter(email__iexact=email).exists() or Dueno.objects.filter(correo__iexact=email).exists():
+                    messages.error(request, "Este correo electrónico ya está registrado en el sistema.")
+                    return redirect('registro_cliente')
+
+                # 2. Formatear RUT para verificar si existe en la BD
+                rut_limpio = str(rut).replace(".", "").replace("-", "").strip().upper()
+                if Dueno.objects.filter(rut=rut_limpio).exists():
+                    messages.error(request, "Este RUT ya se encuentra registrado. Si olvidaste tu contraseña, contacta a la clínica.")
+                    return redirect('registro_cliente')
+
+                # 3. Crear credenciales en auth_user
+                user = User.objects.create_user(
+                    username=username,
+                    email=email,
+                    password=password,
+                    first_name=first_name,
+                    last_name=last_name
+                )
+
+                # 4. Crear ficha en la tabla Dueno
+                Dueno.objects.create(
+                    user=user,
+                    rut=rut,
+                    nombre=nombre_completo,
+                    direccion=direccion,
+                    correo=email,
+                    fono=fono
+                )
+            
+            # Éxito:
+            context = {
+                'registro_exitoso': True,
+                'nombre_usuario': p_nombre
+            }
+            return render(request, 'gestion/registro.html', context)
+
+        except Exception as e:
+            messages.error(request, f"Error al registrar la cuenta: {str(e)}")
+            return redirect('registro_cliente')
+
+    return render(request, 'gestion/registro.html')
+
+def api_validar_datos_cliente(request):
+    """
+    Endpoint AJAX para validar en tiempo real si el username, 
+    email o RUT ya existen en el registro público de clientes.
+    """
+    username = request.GET.get('username', '').strip()
+    rut = request.GET.get('rut', '').strip()
+    email = request.GET.get('email', '').strip()
+
+    data = {
+        'username_usado': False,
+        'rut_usado': False,
+        'email_usado': False
+    }
+
+    if username and User.objects.filter(username__iexact=username).exists():
+        data['username_usado'] = True
+
+    if email and (User.objects.filter(email__iexact=email).exists() or Dueno.objects.filter(correo__iexact=email).exists()):
+        data['email_usado'] = True
+
+    if rut:
+        rut_limpio = rut.replace(".", "").replace("-", "").strip().upper()
+        if Dueno.objects.filter(rut=rut_limpio).exists():
+            data['rut_usado'] = True
+
+    return JsonResponse(data)
