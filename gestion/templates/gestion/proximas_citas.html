@@ -1,0 +1,73 @@
+{% extends 'gestion/base_clientes.html' %}
+{% load static %}
+
+{% block title %}Mis Próximas Citas - Mi Veterinaria{% endblock %}
+
+{% block content %}
+    <div class="container my-5">
+        <h2 class="fw-bold text-primary mb-4">Mis Próximas Citas</h2>
+        
+        {% if citas %}
+            <div class="row g-4">
+                {% for c in citas %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card border-0 shadow-sm h-100 bg-white">
+                            <div class="card-header bg-transparent border-bottom-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+                                <h5 class="fw-bold text-dark mb-0">FECHA: {{ c.dia|date:"d \d\e F, Y" }}</h5>
+                                
+                                {% if c.entrada %}
+                                    <span class="badge bg-success shadow-sm px-2 py-1">Completada</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark shadow-sm px-2 py-1">Pendiente</span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="card-body p-4">
+                                <div class="mb-3">
+                                    <span class="d-block text-muted small fw-bold text-uppercase">Paciente</span>
+                                    <span class="text-dark fs-5 fw-bold">{{ c.mascota.nombre }}</span> <span class="text-muted">({{ c.mascota.especie }})</span>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <span class="d-block text-muted small fw-bold text-uppercase">Especialista y Horario</span>
+                                    <span class="text-dark d-block">{{ c.profesional.nombre }}</span>
+                                    <span class="text-primary fw-bold">{{ c.hora|time:"H:i" }} - {{ c.hora_fin|time:"H:i" }}</span>
+                                </div>
+
+                                <div class="mb-3">
+                                    <span class="d-block text-muted small fw-bold text-uppercase">Servicios Agendados</span>
+                                    {% for servicio in c.servicios.all %}
+                                        <span class="text-dark d-block fw-bold">○ {{ servicio.descripcion }}</span>
+                                    {% empty %}
+                                        <span class="text-muted small d-block">Sin servicios especificados</span>
+                                    {% endfor %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <span class="d-block text-muted small fw-bold text-uppercase">Ubicación</span>
+                                    <span class="text-dark">{{ c.sucursal.descripcion }}</span>
+                                </div>
+                                
+                                <hr class="text-muted mt-4 mb-3">
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-muted small fw-bold">Monto a pagar:</span>
+                                    <h5 class="fw-bold text-success mb-0">
+                                        $<span class="monto-formatear">{{ c.monto_total }}</span> <small class="fs-6 text-muted">{{ c.divisa }}</small>
+                                    </h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-light border shadow-sm text-center py-5 text-muted mt-4">
+                <div class="fs-1 mb-3">🐾</div>
+                <h5 class="fw-bold text-dark">No tienes próximas citas agendadas</h5>
+                <p>Agenda una nueva consulta para mantener la salud de tu mascota al día y bajo control.</p>
+                <a href="{% url 'pagina_agendar' %}" class="btn btn-primary fw-bold mt-2 shadow-sm">Agendar Cita Ahora</a>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

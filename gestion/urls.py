@@ -11,6 +11,7 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('agendar/', views.pagina_agendar, name='pagina_agendar'),
     path('mis-atenciones/', views.historial_cliente, name='historial_cliente'),
+    path('proximas-citas/', views.proximas_citas, name='proximas_citas'),
 
     # Intranet de Veterinarios
     path('intranet/dashboard/', views.dashboard_veterinario, name='dashboard_veterinario'),
@@ -18,6 +19,7 @@ urlpatterns = [
     # Intranet de Veterinarios - Buscador e historial
     path('intranet/pacientes/buscar/', views.buscador_pacientes, name='buscador_pacientes'),
     path('intranet/pacientes/<uuid:mascota_id>/historial/', views.historial_clinico, name='historial_clinico'),
+    
     # Intranet de Jefatura / Administración
     path('intranet/jefatura/', views.dashboard_jefatura, name='dashboard_jefatura'),
     path('intranet/jefatura/profesional/nuevo/', views.administrar_profesional, name='crear_profesional'),

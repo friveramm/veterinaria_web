@@ -771,3 +771,24 @@ def api_validar_datos_profesional(request):
             data['rut_dueno'] = prof_existente.nombre
 
     return JsonResponse(data)
+
+@login_required
+@dueno_required
+def proximas_citas(request):
+    """
+    Portal del Cliente: Muestra las citas agendadas desde el día de hoy en adelante.
+    """
+    dueno = request.user.perfil_dueno
+    hoy = timezone.localdate()
+
+    # Agregar prefetch_related('servicios') para optimizar la carga de los servicios agendados
+    citas_futuras = Cita.objects.filter(
+        mascota__dueno=dueno,
+        dia__gte=hoy
+    ).select_related('mascota', 'profesional', 'sucursal', 'entrada').prefetch_related('servicios').order_by('dia', 'hora')
+
+    context = {
+        'citas': citas_futuras,
+        'hoy': hoy
+    }
+    return render(request, 'gestion/proximas_citas.html', context)
