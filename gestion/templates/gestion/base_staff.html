@@ -36,7 +36,7 @@
                     <span class="text-light me-3">Dr/a. {{ request.user.last_name|default:request.user.username }}</span>
                     <form method="POST" action="{% url 'logout' %}" class="m-0">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-sm btn-outline-danger">Cerrar Sesión</button>
+                        <button type="submit" class="btn btn-sm btn-danger">Cerrar Sesión</button>
                     </form>
                 </div>
             </div>
