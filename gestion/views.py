@@ -699,9 +699,15 @@ def index(request):
         n_estrellas__gte=4
     ).select_related('cita__mascota__dueno').order_by('-id_feedback')[:3]
     
+    # Calcular el promedio general de todas las reseñas de la plataforma
+    promedio_calculado = Feedback.objects.aggregate(promedio_general=Avg('n_estrellas'))['promedio_general']
+    # Si hay reseñas, redondear a 1 decimal. Si no hay, mandar 0.0
+    promedio_general = round(promedio_calculado, 1) if promedio_calculado else 0.0
+    
     context = {
         'servicios': servicios_disponibles,
-        'feedbacks': mejores_feedbacks, # Pasar feedbacks a la plantilla
+        'feedbacks': mejores_feedbacks,
+        'promedio_general': promedio_general, # Promedio al HTML
     }
     return render(request, 'gestion/index.html', context)
 

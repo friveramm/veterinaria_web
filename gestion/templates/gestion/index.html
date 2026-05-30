@@ -7,7 +7,7 @@
     <header class="hero-section shadow-sm mb-5">
         <div class="container text-center">
             <h1 class="display-3 fw-bold mb-3">El cuidado que tu mascota merece</h1>
-            <p class="lead mb-4 fs-4">Especialistas médicos dedicados a mantener la salud, vitalidad y felicidad de tus compañeros de vida.</p>
+            <p class="lead mb-4 fs-4">Especialistas dedicados a mantener la salud, vitalidad y felicidad de tus compañeros peludos.</p>
             
             <div class="d-flex justify-content-center gap-3">
                 {% if request.user.is_authenticated %}
@@ -32,7 +32,7 @@
                 <div class="p-4 rounded bg-white shadow-sm h-100">
                     <div class="fs-1 text-primary mb-2">🩺</div>
                     <h4 class="fw-bold">Profesionales Expertos</h4>
-                    <p class="text-muted mb-0">Médicos cirujanos capacitados y en constante actualización para entregar diagnósticos sumamente rigurosos.</p>
+                    <p class="text-muted mb-0">Médicos veterinarios capacitados y en constante actualización para entregar diagnósticos rigurosos.</p>
                 </div>
             </div>
             <div class="col-md-4">
@@ -46,7 +46,7 @@
                 <div class="p-4 rounded bg-white shadow-sm h-100">
                     <div class="fs-1 text-warning mb-2">🔒</div>
                     <h4 class="fw-bold">Transparencia Total</h4>
-                    <p class="text-muted mb-0">Portal de autogestión donde podrás evaluar inmutablemente cada atención y revisar los registros de tus mascotas.</p>
+                    <p class="text-muted mb-0">Portal de autogestión donde podrás evaluar cada atención y revisar los registros de tus mascotas.</p>
                 </div>
             </div>
         </div>
@@ -70,7 +70,7 @@
                                         {{ s.duracion_minutos }} min
                                     </span>
                                 </div>
-                                <p class="text-muted small">Procedimiento clínico certificado realizado bajo estrictos estándares sanitarios institucionales.</p>
+                                <p class="text-muted small">{% lorem 25 w %}</p>
                             </div>
                             <div class="border-top pt-3 mt-3 d-flex justify-content-between align-items-center">
                                 <span class="text-muted small fw-bold">Valor del Servicio:</span>
@@ -93,7 +93,20 @@
         <div class="row g-5">
             
             <div class="col-lg-6">
-                <h3 class="fw-bold text-dark mb-4">Experiencias Recientes en nuestra Clínica</h3>
+                <div class="d-flex justify-content-between align-items-end mb-4">
+                    <h3 class="fw-bold text-dark mb-0">Experiencias en nuestra Clínica</h3>
+                    
+                    {% if promedio_general > 0 %}
+                    <div class="text-end ms-3">
+                        <div class="d-flex align-items-center">
+                            <span class="display-6 fw-bold text-dark lh-1">{{ promedio_general }}</span>
+                            <span class="text-warning fs-3 ms-1">★</span>
+                        </div>
+                        <span class="small text-muted fw-bold text-uppercase" style="letter-spacing: 1px; font-size: 0.7rem;">Promedio General</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
                 <div class="d-flex flex-column gap-3">
                     {% for f in feedbacks %}
                         <div class="card border-0 shadow-sm bg-light">
