@@ -22,9 +22,15 @@
                         {% csrf_token %}
                         
                         <div class="bg-light p-3 border border-primary rounded mb-4">
-                            <label class="form-label text-primary small fw-bold">RUT del Dueño (Cliente Registrado) <span class="text-danger">*</span></label>
-                            <input type="text" name="rut_dueno" id="input-rut" class="form-control border-primary" required placeholder="Ej: 12.345.678-K">
-                            <small class="text-muted d-block mt-1">El cliente debe existir en nuestra base de datos para asociar la ficha.</small>
+                            <label class="form-label text-primary small fw-bold">Buscar Dueño por RUT <span class="text-danger">*</span></label>
+                            
+                            <div class="position-relative">
+                                <input type="text" name="rut_dueno" id="input-rut" class="form-control border-primary" required placeholder="Ej: 12.345.678-K" data-url-buscar="{% url 'api_buscar_dueno' %}" autocomplete="off">
+                                
+                                <ul id="lista-resultados-dueno" class="list-group position-absolute w-100 shadow z-3 d-none" style="top: 100%; left: 0; margin-top: 4px; cursor: pointer;"></ul>
+                            </div>
+                            
+                            <small id="dueno-feedback" class="text-muted d-block mt-2">Teclea el RUT para buscar al cliente en nuestra base de datos.</small>
                         </div>
 
                         <div class="row g-3 mb-3">
@@ -64,5 +70,5 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'gestion/js/validar_rut.js' %}"></script>
+    <script src="{% static 'gestion/js/verificar_dueno.js' %}"></script>
 {% endblock %}

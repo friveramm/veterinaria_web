@@ -773,6 +773,33 @@ def api_validar_datos_profesional(request):
     return JsonResponse(data)
 
 @login_required
+@veterinario_required
+def api_buscar_dueno_por_rut(request):
+    """
+    Endpoint AJAX Autocompletado: Busca clientes cuyo RUT contenga 
+    los números que el veterinario está tecleando.
+    """
+    rut_bruto = request.GET.get('rut', '')
+    rut_limpio = rut_bruto.replace(".", "").replace("-", "").strip().upper()
+    
+    # Si tiene menos de 6 números, no buscamos para no saturar la BD
+    if len(rut_limpio) < 6:
+        return JsonResponse({'resultados': []})
+        
+    # Filtrar dueños que contengan esos números en su RUT (Máximo 5 resultados)
+    duenos = Dueno.objects.filter(rut__icontains=rut_limpio)[:5]
+    
+    data = [
+        {
+            'rut_bd': d.rut,
+            'nombre': d.nombre
+        }
+        for d in duenos
+    ]
+    
+    return JsonResponse({'resultados': data})
+
+@login_required
 @dueno_required
 def proximas_citas(request):
     """
@@ -1002,3 +1029,4 @@ def agregar_mascota_veterinario(request):
             messages.error(request, f"Error del sistema: {str(e)}")
 
     return render(request, 'gestion/agregar_mascota_vet.html')
+

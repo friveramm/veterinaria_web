@@ -7,6 +7,7 @@ urlpatterns = [
     path('api/profesionales/', views.obtener_profesionales_por_servicio, name='api_profesionales_por_servicio'),
     path('api/validar-profesional/', views.api_validar_datos_profesional, name='api_validar_profesional'),
     path('api/validar-cliente/', views.api_validar_datos_cliente, name='api_validar_cliente'),
+    path('api/buscar-dueno/', views.api_buscar_dueno_por_rut, name='api_buscar_dueno'),
     
     # Público
     path('', views.index, name='index'),
