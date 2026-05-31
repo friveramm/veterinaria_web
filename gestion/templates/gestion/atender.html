@@ -38,6 +38,7 @@
                             <h5 class="fw-bold text-dark">Resumen de la Cita</h5>
                             <p class="text-muted">
                                 Dueño de la Mascota: <strong>{{ cita.mascota.dueno.nombre }}</strong><br>
+                                Edad de la Mascota: <strong>{{ cita.mascota.edad_calculada }}</strong><br>
                                 Cita N° {{ cita.n_cita }} (Horario: {{ cita.hora|time:"H:i" }} - {{ cita.hora_fin|time:"H:i" }})
                             </p>
                             <hr class="text-muted">

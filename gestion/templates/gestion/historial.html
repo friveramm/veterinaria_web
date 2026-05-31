@@ -25,7 +25,7 @@
                         <h4 class="card-title text-center border-bottom pb-3">{{ mascota.nombre }}</h4>
                         <ul class="list-unstyled mt-3">
                             <li class="mb-2"><strong>Especie:</strong> {{ mascota.especie }}</li>
-                            <li class="mb-2"><strong>Edad:</strong> {{ mascota.edad }} años</li>
+                            <li class="mb-2"><strong>Edad:</strong> {{ mascota.edad_calculada }}</li>
                             <li class="mb-2"><strong>Microchip:</strong> {{ mascota.n_chip|default:"No registrado" }}</li>
                             <li class="mb-2"><strong>Dueño:</strong> {{ mascota.dueno.nombre }}</li>
                             <li class="mb-2"><strong>Contacto:</strong> {{ mascota.dueno.fono }}</li>
@@ -39,7 +39,7 @@
                                 {% endfor %}
                             </div>
                         {% else %}
-                            <span class="text-muted small">Sin antecedentes crónicos registrados.</span>
+                            <span class="text-muted small">Sin patologías registradas.</span>
                         {% endif %}
                     </div>
                 </div>
@@ -58,7 +58,7 @@
                                     <div class="timeline-item">
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <h5 class="text-primary mb-0">{{ cita.dia|date:"d \d\e F, Y" }}</h5>
-                                            <span class="badge bg-secondary">Dr. {{ cita.profesional.nombre }}</span>
+                                            <span class="badge bg-secondary">Dr/a. {{ cita.profesional.nombre }}</span>
                                         </div>
                                         <h6 class="text-muted small mb-3">
                                             Sucursal: {{ cita.sucursal.descripcion }} | Bloque: {{ cita.hora|time:"H:i" }}
