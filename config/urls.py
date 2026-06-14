@@ -22,3 +22,6 @@ urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')), 
     path('', include('gestion.urls')),
 ]
+
+# Manejador personalizado para errores 404, apuntando a la vista definida en gestion/views.py
+handler404 = 'gestion.views.error_404_view'

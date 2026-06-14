@@ -1030,3 +1030,9 @@ def agregar_mascota_veterinario(request):
 
     return render(request, 'gestion/agregar_mascota_vet.html')
 
+def error_404_view(request, exception=None):
+    """
+    Manejador manual y oficial para el error 404 (Página no encontrada).
+    Renderiza la plantilla personalizada dentro de la app 'gestion'.
+    """
+    return render(request, 'gestion/404.html', status=404)

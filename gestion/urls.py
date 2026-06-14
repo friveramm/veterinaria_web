@@ -31,4 +31,7 @@ urlpatterns = [
     path('intranet/jefatura/profesional/<uuid:profesional_id>/', views.administrar_profesional, name='administrar_profesional'),
 
     path('intranet/router/', views.redireccionar_por_rol, name='redireccionar_por_rol'),
+
+    # Ruta de prueba para el error 404
+    path('404/', views.error_404_view, name='error_404_test'),
 ]
