@@ -27,7 +27,8 @@ Plataforma Full Stack desarrollada para la administración integral de centros v
 
 Exhibición de la página de inicio, carrusel automatizado con consumo asíncrono de APIs externas (The Cat API / Dog CEO API) y navegación responsiva.
 
-(INSERTAR: index-demo-01.gif)
+<img width="1080" height="608" alt="index-demo-01" src="https://github.com/user-attachments/assets/0cc9db34-ceb7-4ed1-8bc8-51ea3817773b" />
+
 </details>
 
 <details>
@@ -36,7 +37,8 @@ Exhibición de la página de inicio, carrusel automatizado con consumo asíncron
 
 Formulario de registro con validación asíncrona mediante JavaScript (Debouncing) y Fetch API para comprobar disponibilidad de RUT, correo y nombre de usuario en tiempo real.
 
-(INSERTAR: creacion-cliente-demo.gif)
+<img width="1080" height="608" alt="creacion-cliente-demo" src="https://github.com/user-attachments/assets/a0f4654b-ece4-4bae-b66f-2146f0c46bdf" />
+
 </details>
 
 <details>
@@ -45,7 +47,7 @@ Formulario de registro con validación asíncrona mediante JavaScript (Debouncin
 
 Módulo de autogestión donde el cliente puede dar de alta a sus mascotas. El sistema calcula la edad exacta dinámicamente en el backend mediante propiedades del ORM.
 
-(INSERTAR: crear-mascota-demo.gif)
+<img width="1080" height="608" alt="crear-mascota-demo" src="https://github.com/user-attachments/assets/07e85ed3-71cb-4da6-9ca1-122024dcf0e2" />
 </details>
 
 <details>
@@ -54,7 +56,7 @@ Módulo de autogestión donde el cliente puede dar de alta a sus mascotas. El si
 
 Flujo completo para reservar una atención médica en línea, seleccionando sucursales, servicios y profesionales disponibles según bloques de tiempo regulados.
 
-(INSERTAR: agendar-demo.gif)
+<img width="1080" height="608" alt="agendar-demo" src="https://github.com/user-attachments/assets/a3d7c412-941c-402c-8d0c-45d4070e3cf2" />
 </details>
 
 <details>
@@ -63,7 +65,8 @@ Flujo completo para reservar una atención médica en línea, seleccionando sucu
 
 Panel privado del cuerpo médico. Incluye la agenda diaria, buscador predictivo de pacientes por RUT y acceso al historial clínico cronológico (Línea de tiempo).
 
-(INSERTAR: vista-vet-demo.gif)
+<img width="1080" height="608" alt="vista-vet-demo" src="https://github.com/user-attachments/assets/e2ef63a3-2bef-4111-9274-a7c72e60ba98" />
+
 </details>
 
 <details>
@@ -75,12 +78,13 @@ Muestra el panel gerencial con métricas financieras operativas (`Sum`, `Count`,
 #### Paso A: Gestión en Intranet Administrativa
 Creación y alta de un nuevo servicio médico desde el panel privado de Jefatura.
 
-(BORRA ESTE TEXTO Y INSERTAR: dashboard-admin-demo.gif)
+<img width="1080" height="608" alt="dashboard-admin-demo" src="https://github.com/user-attachments/assets/6fa21fe0-1ee6-44c8-af05-b2944cae961b" />
 
 #### Paso B: Reflejo Inmediato en Portal Público
 Actualización en tiempo real del catálogo clínico en la página principal, demostrando la persistencia de datos y la renderización dinámica del ORM.
 
-(BORRA ESTE TEXTO Y INSERTAR: index-demo-02.gif)
+<img width="1080" height="608" alt="index-demo-02" src="https://github.com/user-attachments/assets/0743b851-bbe1-4522-8551-93bc1ca9b8db" />
+
 </details>
 
 ---
